@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <base target="_top">
 <title>WISE Assistant</title>
-<!-- 생성 파일. 수정은 design/AI 비서 홈 v3.dc.html 에서 하고 node tools/build-index.mjs 로 다시 만든다. (2026-10-22 05:31 UTC) -->
+<!-- 생성 파일. 수정은 design/AI 비서 홈 v3.dc.html 에서 하고 node tools/build-index.mjs 로 다시 만든다. (2026-10-22 05:39 UTC) -->
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Manrope:wght@500;600;700;800&family=Montserrat:wght@600;700&display=swap">
 <style>
@@ -2607,6 +2607,14 @@ window.__resources = window.__resources || {};
               <div style="display:flex;flex-direction:column;gap:4px"><span style="font-family:inherit;font-size:10px;font-weight:700;letter-spacing:0.12em;color:#8F8A80">PROFILE</span><span style="font-size:15px;font-weight:800">프로필</span></div>
               <div style="display:flex;flex-direction:column;gap:6px"><span style="font-size:13px;font-weight:700;color:#6F6B63">이름</span><input value="{{ profile.name }}" onChange="{{ setName }}" onBlur="{{ saveNow }}" style="height:40px;border:1px solid #EAE7E0;border-radius:10px;background:#fff;padding:0 14px;font-size:13.5px;color:#1C1B19;outline:none;box-sizing:border-box"></div>
               <div style="display:flex;flex-direction:column;gap:6px"><span style="font-size:13px;font-weight:700;color:#6F6B63">별칭 · 메일에서 나를 부르는 이름</span><input value="{{ ib.aliases }}" onChange="{{ ib.setAliases }}" onBlur="{{ saveNow }}" placeholder="예: 지호, JH, 조 매니저" style="height:40px;border:1px solid #EAE7E0;border-radius:10px;background:#fff;padding:0 14px;font-size:13.5px;color:#1C1B19;outline:none;box-sizing:border-box"></div>
+              <sc-if value="{{ isLiveMode }}">
+              <div style="display:flex;flex-direction:column;gap:6px"><span style="font-size:13px;font-weight:700;color:#6F6B63">분석할 메일 검색어 · 비우면 최근 2일 전체</span>
+                <div style="display:flex;gap:8px">
+                  <input value="{{ ib.mailQuery }}" onChange="{{ ib.setMailQuery }}" onKeyDown="{{ ib.onMailQueryKey }}" placeholder="예: 테스트 (제목·본문에 이 말이 있는 최근 7일 메일만)" style="flex:1;height:40px;border:1px solid #EAE7E0;border-radius:10px;background:#fff;padding:0 14px;font-size:13.5px;color:#1C1B19;outline:none;box-sizing:border-box">
+                  <button onClick="{{ ib.applyMailQuery }}" style="height:40px;padding:0 16px;border:0;border-radius:10px;background:#1C1B19;color:#fff;font-size:13px;font-weight:700;cursor:pointer;white-space:nowrap" style-hover="background:#3A3833">다시 분석</button>
+                </div>
+              </div>
+              </sc-if>
               <div style="display:flex;flex-direction:column;gap:6px"><span style="font-size:13px;font-weight:700;color:#6F6B63">직무</span>
                 <div style="display:flex;gap:6px;flex-wrap:wrap">
                   <sc-for list="{{ roleChips }}" as="r" hint-placeholder-count="4"><button onClick="{{ r.pick }}" style="height:32px;padding:0 12px;border:1px solid {{ r.bd }};border-radius:8px;background:{{ r.bg }};color:{{ r.fg }};font-size:12.5px;font-weight:700;cursor:pointer;white-space:nowrap">{{ r.name }}</button></sc-for>
@@ -2631,7 +2639,8 @@ window.__resources = window.__resources || {};
             <div style="background:#FFFFFF;border:1px solid rgba(0,0,0,0.04);border-radius:22px;box-shadow:0 1px 2px rgba(0,0,0,0.03),0 10px 30px rgba(0,0,0,0.04);padding:22px 24px;display:flex;flex-direction:column;gap:8px">
               <div style="display:flex;flex-direction:column;gap:4px"><span style="font-family:inherit;font-size:10px;font-weight:700;letter-spacing:0.12em;color:#8F8A80">CONNECTIONS</span><span style="font-size:15px;font-weight:800">연결된 계정</span></div>
               <div style="display:flex;align-items:center;justify-content:space-between;padding:8px 0;border-bottom:0.5px solid rgba(60,60,67,0.18)"><div style="display:flex;align-items:center;gap:8px"><span style="font-size:13px;font-weight:700">Gmail</span><span style="font-size:11px;font-weight:700;padding:2px 6px;border-radius:6px;background:#E2F5EE;color:#0E9F7E">읽기 전용</span></div><span style="font-size:12.5px;color:#56524A;font-weight:600">{{ ib.mode }}</span></div>
-              <div style="display:flex;align-items:center;justify-content:space-between;padding:8px 0"><span style="font-size:13px;font-weight:700">오늘 분석 사용량</span><span style="font-size:12.5px;color:#56524A;font-weight:600">{{ ib.usageText }}</span></div>
+              <div style="display:flex;align-items:center;justify-content:space-between;padding:8px 0;border-bottom:0.5px solid rgba(60,60,67,0.18)"><span style="font-size:13px;font-weight:700">오늘 분석 사용량</span><span style="font-size:12.5px;color:#56524A;font-weight:600">{{ ib.usageText }}</span></div>
+              <a href="{{ switchUrl }}" target="_top" style="height:36px;margin-top:4px;border:1px solid #EAE7E0;border-radius:10px;background:#fff;color:#3A3731;font-size:12.5px;font-weight:700;display:flex;align-items:center;justify-content:center;text-decoration:none" style-hover="background:#F5F5F7">다른 Google 계정으로 로그인</a>
             </div>
             </sc-if>
             <sc-if value="{{ showCosmetic }}">
@@ -2659,7 +2668,7 @@ window.__resources = window.__resources || {};
               </div>
             </div>
             </sc-if>
-            <button onClick="{{ restartOnboarding }}" style="height:44px;border:1px solid #EAE7E0;border-radius:10px;background:#fff;color:#3A3731;font-size:13px;font-weight:700;cursor:pointer;white-space:nowrap" style-hover="background:#FFFFFF">처음 설정 다시 하기</button>
+            <button onClick="{{ restartOnboarding }}" style="height:44px;border:1px solid #EAE7E0;border-radius:10px;background:#fff;color:{{ resetFg }};font-size:13px;font-weight:700;cursor:pointer;white-space:nowrap;transition:color .2s" style-hover="background:#FFFFFF">{{ resetLabel }}</button>
           </div>
         </div>
       </div>
@@ -2840,7 +2849,7 @@ window.__resources = window.__resources || {};
               <div style="display:flex;gap:6px">
                 <sc-for list="{{ ob.dots }}" as="d" hint-placeholder-count="3"><div style="width:32px;height:6px;border-radius:3px;background:{{ d.c }};transition:background .25s"></div></sc-for>
               </div>
-              <button onClick="{{ quickStart }}" style="height:32px;padding:0 12px;border:1px solid #EAE7E0;border-radius:8px;background:#fff;color:#3A3731;font-size:12.5px;font-weight:700;cursor:pointer;white-space:nowrap;flex:none" style-hover="background:#FFFFFF">추천 설정으로 바로 시작</button>
+              <sc-if value="{{ showQuick }}"><button onClick="{{ quickStart }}" style="height:32px;padding:0 12px;border:1px solid #EAE7E0;border-radius:8px;background:#fff;color:#3A3731;font-size:12.5px;font-weight:700;cursor:pointer;white-space:nowrap;flex:none" style-hover="background:#FFFFFF">추천 설정으로 바로 시작</button></sc-if>
             </div>
             <div style="display:flex;flex-direction:column;gap:6px">
               <span style="font-family:inherit;font-size:10px;font-weight:700;letter-spacing:0.12em;color:#0E9F7E">{{ ob.stepLabel }}</span>
@@ -3131,6 +3140,7 @@ const TPL0 = [
 ];
 const chOf = i => !i ? '' : (i.kind === 'mail' || i.kind === 'billing') ? 'Gmail' : i.kind === 'msg' ? (/팀즈/.test(i.from) ? 'Teams' : '카카오톡') : '';
 const KEY = 'assistant-home-v3';
+const LIVE_URL = 'https://script.google.com/macros/s/AKfycbxyn1nPhLd8T2lfTgZ7EVzuK9mZO1tHr0YkXXAo_rL5TlEdXaJFeQzSlfqiYcG0F_sP/exec';
 const BLUE = '#0E9F7E', RED = '#F04452', GREEN = '#0E9F7E', INK = '#3A3731';
 const won = n => '₩' + Math.round(n).toLocaleString();
 const man = n => '₩' + Math.round(n / 10000).toLocaleString() + '만';
@@ -3151,7 +3161,7 @@ function defaultProfile(role) {
 class Component extends DCLogic {
   state = {
     onboarded: false, obStep: 0, building: false, buildStep: 0,
-    profile: { ...defaultProfile('perf'), name: isLive() ? '' : '지호' },
+    profile: { ...defaultProfile('perf'), name: isLive() ? '' : '지호', brands: isLive() ? [] : BRANDS0.map(b => ({ ...b })), channels: isLive() ? [] : ['메타', '구글', '네이버', '카카오'] },
     screen: 'inbox', filter: 'all',
     ib: { tasks: [], tab: 'mine', sel: null, busy: false, done: 0, total: 0, usage: 0, limit: 30, morning: false, aliases: isLive() ? '' : '지호, JH' }, campBrand: 'all', dd: null,
     st: Object.fromEntries(ITEMS.map(i => [i.id, 'pending'])),
@@ -3162,6 +3172,7 @@ class Component extends DCLogic {
     reportSel: 'r1', rst: Object.fromEntries(REPORTS.map(r => [r.id, r.st])), hb: -1,
     notif: { approve: true, anomaly: true, daily: false }, brandInput: '', toast: null,
     repeats: [], sug: null, sugBusy: null, rd: {},
+    mailQuery: (() => { try { return localStorage.getItem(KEY + '-q') || ''; } catch (e) { return ''; } })(),
     adReqs: [], adMeta: null, adDrafts: {}, adDraft: null, adBusy: null, adPhase: '', adErr: null, adConfirm: false, adPartial: false
   };
 
@@ -3183,7 +3194,7 @@ class Component extends DCLogic {
         this.setProfile(patch);
         // 서버 모드: 직무·브랜드까지 저장된 계정만 온보딩을 건너뛴다 (이름만 있는 옛 프로필은 온보딩부터)
         if (isLive()) {
-          const complete = !!(role && Array.isArray(sp.brands) && sp.brands.length);
+          const complete = !!role;
           this.setState({ onboarded: complete, obStep: 0 });
           this.save({ ...this.state.profile, ...patch }, complete);
         }
@@ -3230,7 +3241,8 @@ class Component extends DCLogic {
     const sp = await gs('saveProfile', this.profilePayload());
     if (!sp.ok) return fail(sp);
     this.setIb({ phase: '최근 2일 메일 찾는 중' });
-    const lt = await gs('listThreads', { days: 2, maxThreads: 15 });
+    const q = (S.mailQuery || '').trim();
+    const lt = await gs('listThreads', q ? { days: 7, maxThreads: 15, query: q } : { days: 2, maxThreads: 15 });
     if (!lt.ok) return fail(lt);
     const ids = lt.data.threadIds, batches = [];
     for (let i = 0; i < ids.length; i += 5) batches.push(ids.slice(i, i + 5));
@@ -3249,6 +3261,7 @@ class Component extends DCLogic {
     this.setIb({ busy: false, analyzedOnce: true, failures, at: new Date() });
     if (!silent) this.showToast(failures ? `업데이트 완료 · 실패 ${failures}건` : '업무함 업데이트 완료');
     this.refreshSide();
+    this.inferBrands();
   }
   async toggleTask(t) {
     const v = t.status !== 'completed';
@@ -3359,6 +3372,30 @@ class Component extends DCLogic {
       this.setState(s => ({ adBusy: null, adPartial: false, adDraft: d, adDrafts: { ...s.adDrafts, [d.threadId]: d } }));
       this.showToast(`삭제됨 · ${r.data.deleted.length}건`);
     } else this.setState({ adBusy: null, adErr: r.error.message });
+  }
+  /** 메일 요청자 소속("박서연 · 누리푸드 마케팅팀")에서 브랜드를 뽑아, 담당 브랜드가 비어 있으면 채운다 (설정에서 수정 가능) */
+  inferBrands() {
+    if (!isLive() || this.state.profile.brands.length) return;
+    const seen = new Set(), names = [];
+    (this.state.ib.tasks || []).forEach(t => {
+      const org = String(t.requester || '').split(/[·,/|]/)[1];
+      if (!org) return;
+      const n = org.trim().split(/\s+/)[0].replace(/(마케팅|그로스|퍼포먼스|영업|디자인|개발|운영|기획|광고)?(팀|실|본부|파트|부)$/, '').trim();
+      if (n.length >= 2 && n.length <= 20 && !/^(메타|구글|네이버|카카오|틱톡|팀|본사)$/.test(n) && !seen.has(n)) { seen.add(n); names.push(n); }
+    });
+    if (!names.length) return;
+    this.setProfile({ brands: names.slice(0, 8).map(n => ({ id: 'b' + hash(n), name: n })) });
+    gs('saveProfile', this.profilePayload());
+    this.showToast(`메일에서 브랜드 ${Math.min(8, names.length)}개 찾음 · 설정에서 수정`);
+  }
+  /** 처음부터 다시: 서버 저장값 삭제 + Google 권한 무효화 → 앱을 다시 열면 계정 선택·권한 승인부터 */
+  async resetAccount() {
+    this.setState({ resetConfirm: false });
+    this.showToast('초기화 중');
+    const r = await gs('resetAccount');
+    try { localStorage.removeItem(KEY); } catch (e) {}
+    if (!r.ok) return this.showToast(r.error.message);
+    try { window.top.location.href = LIVE_URL; } catch (e) { window.open(LIVE_URL, '_top'); }
   }
   componentDidMount() {
     if (!this.props.forceOnboarding) {
@@ -3732,9 +3769,9 @@ class Component extends DCLogic {
     ];
     const ob = { notBuilding: !S.building, building: S.building,
       s0: S.obStep === 0, s1: S.obStep === 1, s2: S.obStep === 2,
-      dots: (isLive() ? [0, 1] : [0, 1, 2]).map(i => ({ c: i <= S.obStep ? BLUE : '#EAE7E0' })),
-      stepLabel: `STEP ${S.obStep + 1} / ${isLive() ? 2 : 3}`, title: OBT[S.obStep],
-      hasPrev: S.obStep > 0, nextLabel: S.obStep === (isLive() ? 1 : 2) ? (isLive() ? '메일 분석 시작' : `비서 ${n}명으로 시작`) : '다음',
+      dots: (isLive() ? [0] : [0, 1, 2]).map(i => ({ c: i <= S.obStep ? BLUE : '#EAE7E0' })),
+      stepLabel: isLive() ? 'START' : `STEP ${S.obStep + 1} / 3`, title: isLive() ? '이름과 하는 일을 알려주세요' : OBT[S.obStep],
+      hasPrev: S.obStep > 0, nextLabel: S.obStep === (isLive() ? 0 : 2) ? (isLive() ? '메일 분석 시작' : `비서 ${n}명으로 시작`) : '다음',
       buildTitle: `${P.name || '나'} 님의 업무 환경 동기화 중`, buildPct: Math.round((S.buildStep + 1) / 6 * 100) + '%',
       buildSteps: BUILD.map(([t, sub], i) => ({ t, sub, done: i < S.buildStep, active: i === S.buildStep, wait: i > S.buildStep, c: i <= S.buildStep ? '#1C1B19' : '#B4AFA5' })) };
 
@@ -3752,7 +3789,10 @@ class Component extends DCLogic {
       mode: isLive() ? (IB.email || 'Gmail 연결됨') : '데모 데이터 · 배포 시 Gmail 연결', usageText: `${IB.usage} / ${IB.limit}`,
       aliases: IB.aliases, setAliases: e => this.setIb({ aliases: e.target.value }),
       morningOn: IB.morning, morningOff: !IB.morning, toggleMorning: () => this.toggleMorning(),
-      busy: IB.busy, idle: !IB.busy, liveLabel: IB.busy ? '메일 확인 중' : (IB.at ? `실시간 · ${IB.at.getHours()}:${String(IB.at.getMinutes()).padStart(2, '0')} 업데이트` : '실시간'), analyze: () => this.runAnalyze(),
+      busy: IB.busy, idle: !IB.busy, liveLabel: (IB.busy ? '메일 확인 중' : (IB.at ? `실시간 · ${IB.at.getHours()}:${String(IB.at.getMinutes()).padStart(2, '0')} 업데이트` : '실시간')) + ((S.mailQuery || '').trim() ? ` · "${S.mailQuery.trim()}" 메일만` : ''), analyze: () => this.runAnalyze(),
+      mailQuery: S.mailQuery, setMailQuery: e => { const v = e.target.value; this.setState({ mailQuery: v }); try { localStorage.setItem(KEY + '-q', v); } catch (x) {} },
+      onMailQueryKey: e => { if (e.key === 'Enter' && !e.nativeEvent.isComposing) { e.target.blur(); this.setIb({ tasks: [] }); this.runAnalyze(); } },
+      applyMailQuery: () => { this.setIb({ tasks: [] }); this.runAnalyze(); },
       prog: IB.busy ? (IB.total ? Math.round(IB.done / IB.total * 90 + 10) : 8) + '%' : (IB.analyzedOnce ? '100%' : '0%'),
       progText: (isLive() ? '' : '데모 데이터 · ') + (IB.busy ? `${IB.phase}${IB.total ? ` · ${IB.done}/${IB.total}묶음` : ''}` : IB.analyzedOnce ? `${IB.scope || '최근 2일'}${IB.stats ? ` · 대화 ${IB.stats.total}개 중 ${IB.stats.selected}개 분석` : ''} · 오늘 분석 ${IB.usage}/${IB.limit}` : `메일을 자동으로 확인해요 · 오늘 분석 ${IB.usage}/${IB.limit}`),
       kpis: [
@@ -3900,14 +3940,21 @@ class Component extends DCLogic {
       addBrand: () => this.addBrand(),
       toolRows: TOOLS.map(t => { const on = P.tools.includes(t); return { name: t, state: on ? 'ON' : 'OFF', sbg: on ? '#E2F5EE' : '#EEF0F3', sc: on ? BLUE : '#8F8A80', btn: on ? '연결 해제' : '연결', fg: on ? '#56524A' : BLUE, toggle: () => this.setProfile({ tools: on ? P.tools.filter(x => x !== t) : [...P.tools, t] }) }; }),
       notifRows: [['approve', '승인 요청'], ['anomaly', '성과 이상'], ['daily', '아침 브리핑']].map(([k, t]) => ({ t, on: S.notif[k], off: !S.notif[k], toggle: () => this.setState(s => ({ notif: { ...s.notif, [k]: !s.notif[k] } })) })),
-      restartOnboarding: () => this.setState({ onboarded: false, obStep: 0, aside: null }),
+      restartOnboarding: () => {
+        if (!isLive()) return this.setState({ onboarded: false, obStep: 0, aside: null });
+        if (!S.resetConfirm) { this.setState({ resetConfirm: true }); clearTimeout(this._rc); this._rc = setTimeout(() => this.setState({ resetConfirm: false }), 6000); return; }
+        clearTimeout(this._rc); this.resetAccount();
+      },
+      resetLabel: !isLive() ? '처음 설정 다시 하기' : S.resetConfirm ? '한 번 더 누르면 저장값을 지우고 메일 권한부터 다시 묻습니다' : '처음부터 다시 하기 · 메일 연결 포함',
+      resetFg: isLive() && S.resetConfirm ? '#E42939' : '#3A3731',
+      showQuick: !isLive(), switchUrl: 'https://accounts.google.com/AccountChooser?continue=' + encodeURIComponent(LIVE_URL),
 
       showOnboarding: !S.onboarded, ob,
       roleCards: ROLES.map(r => { const on = P.role === r.k; return { ...r, bg: on ? '#F0F9F5' : '#fff', bd: on ? BLUE : '#EAE7E0', fg: on ? BLUE : '#1C1B19', pick: () => this.setProfile({ role: r.k, cards: Object.fromEntries(CARD_DEFS.map(c => [c.k, r.cards.includes(c.k)])) }) }; }),
       channelChips: CHANNELS.map(ch => { const on = P.channels.includes(ch); return { name: ch, ...chip(on), toggle: () => this.setProfile({ channels: on ? P.channels.filter(x => x !== ch) : [...P.channels, ch] }) }; }),
       toolChips: TOOLS.map(t => { const on = P.tools.includes(t); return { name: t, ...chip(on), toggle: () => this.setProfile({ tools: on ? P.tools.filter(x => x !== t) : [...P.tools, t] }) }; }),
       obPrev: () => this.setState(s => ({ obStep: Math.max(0, s.obStep - 1) })),
-      obNext: () => { if (S.obStep === 0 && !(P.name || '').trim()) return this.showToast('이름을 입력해 주세요'); if (S.obStep < (isLive() ? 1 : 2)) this.setState({ obStep: S.obStep + 1 }); else this.startBuild(); },
+      obNext: () => { if (S.obStep === 0 && !(P.name || '').trim()) return this.showToast('이름을 입력해 주세요'); if (S.obStep < (isLive() ? 0 : 2)) this.setState({ obStep: S.obStep + 1 }); else this.startBuild(); },
       quickStart: () => { if (isLive() && !(P.name || '').trim()) return this.showToast('이름을 입력해 주세요'); this.setState({ profile: { ...defaultProfile(P.role), name: P.name || '지호' } }); setTimeout(() => this.startBuild(), 0); },
       saveNow: () => this.saveProfileNow(),
       noop: () => {}
