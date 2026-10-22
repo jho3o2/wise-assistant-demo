@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <base target="_top">
 <title>WISE Assistant</title>
-<!-- 생성 파일. 수정은 design/AI 비서 홈 v3.dc.html 에서 하고 node tools/build-index.mjs 로 다시 만든다. (2026-10-22 06:08 UTC) -->
+<!-- 생성 파일. 수정은 design/AI 비서 홈 v3.dc.html 에서 하고 node tools/build-index.mjs 로 다시 만든다. (2026-10-22 06:12 UTC) -->
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Manrope:wght@500;600;700;800&family=Montserrat:wght@600;700&display=swap">
 <style>
@@ -2364,7 +2364,7 @@ window.__resources = window.__resources || {};
               <div style="display:flex;align-items:center;justify-content:space-between;gap:10px;padding:10px 12px;border-radius:12px;background:#FFF8E8;animation:fadeUp .25s ease">
                 <div style="display:flex;flex-direction:column;gap:2px;min-width:0"><span style="font-size:12.5px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ g.message }}</span><span style="font-size:11.5px;color:#8F8A80;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ g.sub }}</span></div>
                 <div style="display:flex;gap:6px;flex:none">
-                  <sc-if value="{{ g.idle }}"><button onClick="{{ g.yes }}" style="height:28px;padding:0 10px;border:0;border-radius:8px;background:#1C1B19;color:#fff;font-size:12px;font-weight:700;cursor:pointer;white-space:nowrap" style-hover="background:#3A3833">방법 보기</button><button onClick="{{ g.no }}" style="height:28px;padding:0 10px;border:1px solid #EAE7E0;border-radius:8px;background:#fff;color:#56524A;font-size:12px;font-weight:700;cursor:pointer;white-space:nowrap">아니요</button></sc-if>
+                  <sc-if value="{{ g.idle }}"><button onClick="{{ g.yes }}" style="height:28px;padding:0 10px;border:0;border-radius:8px;background:#1C1B19;color:#fff;font-size:12px;font-weight:700;cursor:pointer;white-space:nowrap" style-hover="background:#3A3833">반복 업무로 지정</button><button onClick="{{ g.no }}" style="height:28px;padding:0 10px;border:1px solid #EAE7E0;border-radius:8px;background:#fff;color:#56524A;font-size:12px;font-weight:700;cursor:pointer;white-space:nowrap">아니요</button></sc-if>
                   <sc-if value="{{ g.busy }}"><div style="height:28px;display:flex;align-items:center;gap:6px;font-size:12px;color:#B7791F;font-weight:700;white-space:nowrap">{{ spinner }}제안 작성 중</div></sc-if>
                 </div>
               </div>
@@ -3315,12 +3315,26 @@ class Component extends DCLogic {
     this.showToast(r.ok ? '프로필 저장됨' : r.error.message);
   }
   /** 업무함 옆에 붙는 것들: 반복 업무 알림 · 자동화 설정 · 광고 세팅 요청 메일 */
-  async refreshSide() {
-    const [r, a, q] = await Promise.all([gs('getRepeatAlerts'), gs('getAutomations'), gs('listAdRequests')]);
+  async refreshSide(force) {
+    const [r, a] = await Promise.all([gs('getRepeatAlerts'), gs('getAutomations')]);
     if (r.ok) this.setState({ repeats: r.data.groups || [] });
-    if (a.ok && a.data.items) this.setState(s => ({ autos: s.autos.map(x => a.data.items[x.id] ? { ...x, ...a.data.items[x.id] } : x) }));
-    if (q.ok) this.setState({ adReqs: q.data.requests || [], adMeta: { ready: !!q.data.metaReady, accounts: q.data.accounts || [] } });
-    else this.setState({ adReqs: [], adMeta: { ready: false, forbidden: q.error && q.error.code === 'FORBIDDEN', error: q.error && q.error.message } });
+    if (a.ok && a.data.items) this.setState(s => ({ autos: s.autos.map(x => a.data.items[x.id] ? { ...x, ...a.data.items[x.id] } : x), savedAutos: a.data.items }));
+    // 세팅 요청 메일 검색은 Gmail 호출이 많아 3분 간격으로만 (수동 새로고침은 즉시)
+    if (!force && this._adAt && Date.now() - this._adAt < 180000) return;
+    this._adAt = Date.now();
+    const q = await gs('listAdRequests');
+    if (q.ok) this.setState({ adReqs: q.data.requests || [], adMeta: { ok: true, ready: !!q.data.metaReady, accounts: q.data.accounts || [] } });
+    else this.setState({ adMeta: { ok: false, ready: false, forbidden: q.error && q.error.code === 'FORBIDDEN', error: q.error && q.error.message } });
+  }
+  /** 반복 업무로 지정: 자동화 탭에 등록(사용자별 저장) → 바로 자동화 방법 제안 */
+  async registerRepeat(g) {
+    const id = 'rep' + String(g.groupId || '').replace(/[^a-z0-9]/gi, '').toLowerCase().slice(0, 20);
+    if (!this.state.autos.some(a => a.id === id)) {
+      this.setState(s => ({ autos: [{ id, name: g.label, desc: `반복 업무 · ${g.count}회${g.cadence ? ' · ' + g.cadence : ''}${g.requesters && g.requesters.length ? ' · ' + g.requesters.join(', ') : ''}`, trigger: g.cadence || '반복', mode: 'approve', on: true, runs: [0, 0, 0, 0, 0, 0, 0] }, ...s.autos] }));
+      if (isLive()) gs('setAutomation', id, { on: true, mode: 'approve' });
+    }
+    this.showToast(`"${g.label}" 반복 업무로 지정 · 자동화 탭`);
+    this.askSuggest(g);
   }
   copyText(text, msg) {
     const done = () => this.showToast(msg || '복사됨');
@@ -3693,8 +3707,8 @@ class Component extends DCLogic {
         canAdPlan: isLive(), planBtn: S.adDrafts[t.threadId] ? '세팅안 보기' : '메타 세팅안 만들기',
         makePlan: () => this.openPlan({ threadId: t.threadId, subject: t.title }, t) };
     };
-    const repView = S.repeats.map(g => ({ message: g.message, sub: `${g.count}회${g.cadence ? ' · ' + g.cadence : ''}${g.requesters && g.requesters.length ? ' · ' + g.requesters.join(', ') : ''}`,
-      idle: S.sugBusy !== g.groupId, busy: S.sugBusy === g.groupId, yes: () => this.askSuggest(g), no: () => this.dismissRepeat(g) }));
+    const repView = S.repeats.map(g => ({ message: `반복 업무로 보여요 · "${g.label}" ${g.count}회`, sub: `${g.count}회${g.cadence ? ' · ' + g.cadence : ''}${g.requesters && g.requesters.length ? ' · ' + g.requesters.join(', ') : ''}`,
+      idle: S.sugBusy !== g.groupId, busy: S.sugBusy === g.groupId, yes: () => this.registerRepeat(g), no: () => this.dismissRepeat(g) }));
     const sg = S.sug || {}, sgEx = ((sg.group || {}).examples || []).slice(0, 3);
     const sgView = { type: sg.automationType || '제안', hasMin: !!sg.effortMinutes, min: sg.effortMinutes || 0, headline: sg.headline || '', why: sg.why || '',
       steps: (sg.steps || []).map((t, i) => ({ n: i + 1, t })), hasCaveat: !!sg.caveat, caveat: sg.caveat || '', prompt: sg.claudePrompt || '',
@@ -3923,7 +3937,7 @@ class Component extends DCLogic {
       pendingTotal, approveAll: () => this.approveIds(vis.map(i => i.id)),
       adPending: pendingTotal > 0, adClear: pendingTotal === 0 && !adReqRows.length,
       adEmptyText: !isLive() ? '대기 없음' : S.adMeta && S.adMeta.forbidden ? '광고 세팅 권한 없는 계정 · @wisebirds.com 계정으로 접속' : S.adMeta && S.adMeta.error ? S.adMeta.error : '세팅 요청 메일 없음 · 최근 7일, 제목에 "세팅" + Drive 링크',
-      refreshAds: async e => { e && e.stopPropagation && e.stopPropagation(); await this.refreshSide(); this.showToast(`세팅 요청 메일 ${this.state.adReqs.length}건`); }, goAds: () => this.setState({ screen: 'campaign', aside: null, dd: null }),
+      refreshAds: async e => { e && e.stopPropagation && e.stopPropagation(); await this.refreshSide(true); const m = this.state.adMeta; this.showToast(m && m.ok === false ? (m.error || '세팅 요청 확인 실패') : `세팅 요청 메일 ${this.state.adReqs.length}건`); }, goAds: () => this.setState({ screen: 'campaign', aside: null, dd: null }),
       adStrip: { caps: isLive() ? 'ADS · 샘플 데이터' : 'ADS · 어제', title: `브랜드 ${brandIds.length}개 · Spend ${man(brandIds.reduce((a, id) => a + kpiOf(id).spend, 0))}`, n: Math.max(1, Math.min(4, brandIds.length)), rows: brandIds.slice(0, 4).map(id => { const k = kpiOf(id); return { name: bname(id), roas: k.roas + '%', roasD: arrow(k.roasD), roasC: k.roasD < 0 ? RED : BLUE, cpa: won(k.spend / k.conv) }; }) },
       filterName: homeSel('all') ? '전체' : bname(S.filter),
       brandChips: [{ id: 'all', name: '전체' }, ...P.brands].map(b => ({ name: b.name, ...pick(homeSel(b.id)), pick: () => this.setState({ filter: b.id, dd: null }) })),
@@ -3984,7 +3998,7 @@ class Component extends DCLogic {
       campComp: cIds.flatMap(id => (COMP[id] || []).map(x => ({ t: x.t, s: cIds.length > 1 ? `${bname(id)} · ${x.s}` : x.s }))).slice(0, 3),
       campQueue: [...adReqRows, ...queue.map(itemView)], campQueueEmpty: !adReqRows.length && queue.length === 0,
       campCaps: isLive() ? '캠페인 · 샘플 데이터' : '캠페인 · 어제',
-      adMetaLine: S.adMeta && S.adMeta.forbidden ? '광고 세팅 권한 없는 계정' : S.adMeta && S.adMeta.ready === false && isLive() ? '메타 토큰 미설정 · 세팅안 작성만 가능' : '',
+      adMetaLine: S.adMeta && S.adMeta.forbidden ? '광고 세팅 권한 없는 계정' : S.adMeta && S.adMeta.ok && !S.adMeta.ready && isLive() ? '메타 토큰 미설정 · 세팅안 작성만 가능' : '',
 
       threads: THREADS.map((t, i) => ({ ...t, bg: S.thread === i ? '#E2F5EE' : 'transparent', fg: S.thread === i ? BLUE : '#1C1B19', pick: () => this.setState({ thread: i, msgs: [{ mine: true, text: t.title }, { mine: false, text: this.reply(t.title) }] }) })),
       newChat: () => this.setState({ thread: -1, msgs: [] }),
@@ -4006,7 +4020,7 @@ class Component extends DCLogic {
           setApprove: () => upd({ mode: 'approve' }), setAuto: () => upd({ mode: 'auto' }), toggle: () => upd({ on: !a.on }) };
       }),
       recs: [
-        ...S.repeats.map(g => ({ name: g.label, desc: g.message, trigger: `${g.count}회${g.cadence ? ' · ' + g.cadence : ''}`, btn: S.sugBusy === g.groupId ? '작성 중' : '방법 보기', add: () => this.askSuggest(g) })),
+        ...S.repeats.map(g => ({ name: g.label, desc: `반복 업무로 보여요 · ${g.message}`, trigger: `${g.count}회${g.cadence ? ' · ' + g.cadence : ''}`, btn: S.sugBusy === g.groupId ? '작성 중' : '반복 업무로 지정', add: () => this.registerRepeat(g) })),
         ...(isLive() ? [] : S.recs).map((r, i) => ({ ...r, btn: '추가', add: () => { this.setState(s => ({ autos: [{ ...r, id: 'rec' + i, on: true, runs: [0, 0, 0, 0, 0, 0, 0] }, ...s.autos], recs: s.recs.filter((_, j) => j !== i) })); this.showToast(`${r.name} 추가 완료`); } }))
       ],
       recsEmpty: !S.repeats.length && (isLive() || S.recs.length === 0),
