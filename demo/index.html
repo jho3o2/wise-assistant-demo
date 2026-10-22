@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <base target="_top">
 <title>WISE Assistant</title>
-<!-- 생성 파일. 수정은 design/AI 비서 홈 v3.dc.html 에서 하고 node tools/build-index.mjs 로 다시 만든다. (2026-10-22 05:23 UTC) -->
+<!-- 생성 파일. 수정은 design/AI 비서 홈 v3.dc.html 에서 하고 node tools/build-index.mjs 로 다시 만든다. (2026-10-22 05:28 UTC) -->
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Manrope:wght@500;600;700;800&family=Montserrat:wght@600;700&display=swap">
 <style>
@@ -3178,7 +3178,12 @@ class Component extends DCLogic {
         if (Array.isArray(sp.tools) && sp.tools.length) patch.tools = sp.tools;
         if (sp.cards && Object.keys(sp.cards).length) patch.cards = { ...this.state.profile.cards, ...sp.cards };
         this.setProfile(patch);
-        if (isLive() && !this.state.onboarded) { this.setState({ onboarded: true }); this.save({ ...this.state.profile, ...patch }, true); }
+        // 서버 모드: 직무·브랜드까지 저장된 계정만 온보딩을 건너뛴다 (이름만 있는 옛 프로필은 온보딩부터)
+        if (isLive()) {
+          const complete = !!(role && Array.isArray(sp.brands) && sp.brands.length);
+          this.setState({ onboarded: complete, obStep: 0 });
+          this.save({ ...this.state.profile, ...patch }, complete);
+        }
       }
     }
     const t = await gs('getSavedTasks');
@@ -3356,7 +3361,7 @@ class Component extends DCLogic {
     if (!this.props.forceOnboarding) {
       try {
         const saved = JSON.parse(localStorage.getItem(KEY) || 'null');
-        if (saved && saved.profile) this.setState({ profile: saved.profile, onboarded: true });
+        if (saved && saved.profile) this.setState({ profile: saved.profile, onboarded: isLive() ? !!saved.onboarded : true }); // 서버 모드는 부팅 때 서버 프로필로 다시 결정
       } catch (e) {}
     }
     setTimeout(() => this.bootIb(), 0);
