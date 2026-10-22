@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <base target="_top">
 <title>WISE Assistant</title>
-<!-- 생성 파일. 수정은 design/AI 비서 홈 v3.dc.html 에서 하고 node tools/build-index.mjs 로 다시 만든다. (2026-10-22 04:58 UTC) -->
+<!-- 생성 파일. 수정은 design/AI 비서 홈 v3.dc.html 에서 하고 node tools/build-index.mjs 로 다시 만든다. (2026-10-22 05:23 UTC) -->
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Manrope:wght@500;600;700;800&family=Montserrat:wght@600;700&display=swap">
 <style>
@@ -2004,6 +2004,7 @@ window.__resources = window.__resources || {};
           </div>
       </header>
       <div style="grid-row:2;grid-column:{{ px.ads.col }};display:{{ px.ads.disp }};min-height:0;min-width:0;flex-direction:column;gap:12px;animation:fadeUp .3s cubic-bezier(.23,1,.32,1)">
+        <sc-if value="{{ showAdStrip }}">
         <div onClick="{{ goAds }}" style="flex:none;background:rgba(255,255,255,0.92);backdrop-filter:saturate(180%) blur(20px);border:1px solid rgba(0,0,0,0.04);border-radius:22px;box-shadow:0 1px 2px rgba(0,0,0,0.03),0 10px 30px rgba(0,0,0,0.04);padding:16px 18px;display:flex;flex-direction:column;gap:12px;cursor:pointer;transition:border-color .25s" style-hover="border-color:#D8D4CB">
           <div style="display:flex;align-items:center;justify-content:space-between;gap:8px"><div style="display:flex;flex-direction:column;gap:2px"><span style="font-family:inherit;font-size:10px;font-weight:700;letter-spacing:0.12em;color:#8F8A80">{{ adStrip.caps }}</span><span style="font-size:13px;font-weight:800;white-space:nowrap">{{ adStrip.title }}</span></div><button onClick="{{ px.ads.toggle }}" title="광고 전체 보기" style="width:28px;height:28px;flex:none;border:0;border-radius:50%;background:rgba(118,118,128,0.12);color:#3A3731;cursor:pointer;display:flex;align-items:center;justify-content:center" style-active="transform:scale(0.9)"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 3h6v6M9 21H3v-6M21 3l-7 7M3 21l7-7"></path></svg></button></div>
           <div style="display:flex;flex-direction:column">
@@ -2015,6 +2016,7 @@ window.__resources = window.__resources || {};
             </sc-for>
           </div>
         </div>
+        </sc-if>
         <div style="flex:1;min-height:0;background:rgba(255,255,255,0.92);backdrop-filter:saturate(180%) blur(20px);border:1px solid rgba(0,0,0,0.04);border-radius:22px;box-shadow:0 1px 2px rgba(0,0,0,0.03),0 10px 30px rgba(0,0,0,0.04);padding:16px 18px;display:flex;flex-direction:column;gap:8px;overflow:hidden">
           <div style="display:flex;align-items:center;justify-content:space-between"><div style="display:flex;flex-direction:column;gap:2px"><span style="font-family:inherit;font-size:10px;font-weight:700;letter-spacing:0.12em;color:#8F8A80">APPROVAL</span><span style="font-size:13px;font-weight:800;white-space:nowrap">광고 승인 대기</span></div>
             <sc-if value="{{ adPending }}"><button onClick="{{ approveAll }}" style="height:28px;padding:0 10px;border:0;border-radius:8px;background:#1C1B19;color:#fff;font-size:12px;font-weight:700;cursor:pointer;white-space:nowrap" style-hover="background:#3A3833">모두 승인 {{ pendingTotal }}</button></sc-if>
@@ -2242,6 +2244,7 @@ window.__resources = window.__resources || {};
             <span style="font-size:13px;color:#8F8A80;font-weight:600;white-space:nowrap">{{ campStatus }}</span>
           </div>
           <div style="display:flex;align-items:center;gap:8px">
+            <sc-if value="{{ showAdsSample }}">
             <div style="position:relative">
               <button onClick="{{ dd.toggleCamp }}" style="height:38px;padding:0 12px;background:#fff;border:1px solid #EAE7E0;border-radius:10px;display:flex;align-items:center;gap:8px;cursor:pointer;white-space:nowrap"><span style="font-family:inherit;font-size:9.5px;font-weight:700;letter-spacing:0.12em;color:#8F8A80">BRAND</span><span style="font-size:13px;font-weight:700;color:#1C1B19">{{ campName }}</span><span style="font-size:10px;color:#8F8A80">▾</span></button>
               <sc-if value="{{ dd.campOpen }}">
@@ -2250,11 +2253,13 @@ window.__resources = window.__resources || {};
                 </div>
               </sc-if>
             </div>
+            </sc-if>
             <sc-if value="{{ campHasPending }}">
               <button onClick="{{ approveCampQueue }}" style="height:38px;padding:0 16px;border:0;border-radius:10px;background:#1C1B19;color:#fff;font-size:13px;font-weight:700;cursor:pointer;white-space:nowrap;flex:none" style-hover="background:#3A3833" style-active="transform:scale(0.97)">{{ campPendingLabel }}</button>
             </sc-if>
           </div>
         </header>
+        <sc-if value="{{ showAdsSample }}">
         <div style="display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px">
           <sc-for list="{{ campKpis }}" as="k" hint-placeholder-count="4">
             <div style="background:#FFFFFF;border:1px solid rgba(0,0,0,0.04);border-radius:22px;box-shadow:0 1px 2px rgba(0,0,0,0.03),0 10px 30px rgba(0,0,0,0.04);padding:18px 22px;display:flex;flex-direction:column;gap:10px;min-width:0">
@@ -2266,7 +2271,9 @@ window.__resources = window.__resources || {};
             </div>
           </sc-for>
         </div>
-        <div style="flex:1;min-height:0;display:grid;grid-template-columns:minmax(0,2fr) minmax(0,1fr);gap:12px">
+        </sc-if>
+        <div style="flex:1;min-height:0;display:grid;grid-template-columns:{{ campGridCols }};gap:12px">
+          <sc-if value="{{ showAdsSample }}">
           <div style="display:flex;flex-direction:column;gap:12px;min-height:0">
             <div style="flex:1;min-height:0;background:#FFFFFF;border:1px solid rgba(0,0,0,0.04);border-radius:22px;box-shadow:0 1px 2px rgba(0,0,0,0.03),0 10px 30px rgba(0,0,0,0.04);padding:22px 24px;display:flex;flex-direction:column;gap:12px;overflow:hidden">
               <div style="display:flex;flex-direction:column;gap:4px"><span style="font-family:inherit;font-size:10px;font-weight:700;letter-spacing:0.12em;color:#8F8A80">CAMPAIGNS</span><span style="font-size:15px;font-weight:800">{{ campCaps }}</span></div>
@@ -2306,6 +2313,7 @@ window.__resources = window.__resources || {};
               </div>
             </div>
           </div>
+          </sc-if>
           <div style="background:#FFFFFF;border:1px solid rgba(0,0,0,0.04);border-radius:22px;box-shadow:0 1px 2px rgba(0,0,0,0.03),0 10px 30px rgba(0,0,0,0.04);padding:22px 24px;display:flex;flex-direction:column;gap:8px;min-height:0;overflow:hidden">
             <div style="display:flex;flex-direction:column;gap:4px"><span style="font-family:inherit;font-size:10px;font-weight:700;letter-spacing:0.12em;color:#8F8A80">APPROVAL</span><span style="font-size:15px;font-weight:800">승인 대기</span><span style="font-size:11.5px;color:#8F8A80;font-weight:600">{{ adMetaLine }}</span></div>
             <div style="flex:1;min-height:0;overflow:auto;display:flex;flex-direction:column">
@@ -2616,6 +2624,14 @@ window.__resources = window.__resources || {};
             </div>
           </div>
           <div style="display:flex;flex-direction:column;gap:12px;min-height:0">
+            <sc-if value="{{ isLiveMode }}">
+            <div style="background:#FFFFFF;border:1px solid rgba(0,0,0,0.04);border-radius:22px;box-shadow:0 1px 2px rgba(0,0,0,0.03),0 10px 30px rgba(0,0,0,0.04);padding:22px 24px;display:flex;flex-direction:column;gap:8px">
+              <div style="display:flex;flex-direction:column;gap:4px"><span style="font-family:inherit;font-size:10px;font-weight:700;letter-spacing:0.12em;color:#8F8A80">CONNECTIONS</span><span style="font-size:15px;font-weight:800">연결된 계정</span></div>
+              <div style="display:flex;align-items:center;justify-content:space-between;padding:8px 0;border-bottom:0.5px solid rgba(60,60,67,0.18)"><div style="display:flex;align-items:center;gap:8px"><span style="font-size:13px;font-weight:700">Gmail</span><span style="font-size:11px;font-weight:700;padding:2px 6px;border-radius:6px;background:#E2F5EE;color:#0E9F7E">읽기 전용</span></div><span style="font-size:12.5px;color:#56524A;font-weight:600">{{ ib.mode }}</span></div>
+              <div style="display:flex;align-items:center;justify-content:space-between;padding:8px 0"><span style="font-size:13px;font-weight:700">오늘 분석 사용량</span><span style="font-size:12.5px;color:#56524A;font-weight:600">{{ ib.usageText }}</span></div>
+            </div>
+            </sc-if>
+            <sc-if value="{{ showCosmetic }}">
             <div style="background:#FFFFFF;border:1px solid rgba(0,0,0,0.04);border-radius:22px;box-shadow:0 1px 2px rgba(0,0,0,0.03),0 10px 30px rgba(0,0,0,0.04);padding:22px 24px;display:flex;flex-direction:column;gap:8px">
               <div style="display:flex;flex-direction:column;gap:4px"><span style="font-family:inherit;font-size:10px;font-weight:700;letter-spacing:0.12em;color:#8F8A80">CONNECTIONS</span><span style="font-size:15px;font-weight:800">연결된 계정</span></div>
               <div style="display:flex;flex-direction:column">
@@ -2639,6 +2655,7 @@ window.__resources = window.__resources || {};
                 </sc-for>
               </div>
             </div>
+            </sc-if>
             <button onClick="{{ restartOnboarding }}" style="height:44px;border:1px solid #EAE7E0;border-radius:10px;background:#fff;color:#3A3731;font-size:13px;font-weight:700;cursor:pointer;white-space:nowrap" style-hover="background:#FFFFFF">처음 설정 다시 하기</button>
           </div>
         </div>
@@ -2993,9 +3010,6 @@ const AUTOS = [
 // 서버 모드에서는 실제로 동작하는 것만 보여준다
 const AUTOS_LIVE = [
   { id: 'morning', name: '아침 자동 분석', desc: '매일 08:00 최근 2일 메일을 미리 분석', trigger: '매일 08:00', mode: 'auto', on: false, runs: [0, 0, 0, 0, 0, 0, 0] },
-  { id: 'replydraft', name: '메일 답장 초안', desc: '업무 상세에서 요청 시 Gemini가 초안 작성', trigger: '요청 시', mode: 'approve', on: true, runs: [0, 0, 0, 0, 0, 0, 0] },
-  { id: 'repeat', name: '반복 업무 탐지', desc: '같은 업무가 3건 이상이면 자동화 방법 제안', trigger: '분석 직후', mode: 'approve', on: true, runs: [0, 0, 0, 0, 0, 0, 0] },
-  { id: 'adsetup', name: '광고 세팅안 작성', desc: '세팅 요청 메일의 Drive 자료로 메타 세팅안 작성 · 승인 후 일시정지 생성', trigger: '세팅 요청 메일', mode: 'approve', on: true, runs: [0, 0, 0, 0, 0, 0, 0] }
 ];
 const RECS = [
   { name: '예산 소진 알림', desc: '일 예산 90% 소진 시 알림', trigger: '30분마다', mode: 'auto' },
@@ -3104,7 +3118,7 @@ const NAV = [
   { k: 'work', label: '홈', d: 'M3 10.5 12 3l9 7.5V20a1 1 0 0 1-1 1h-5v-6H9v6H4a1 1 0 0 1-1-1z' },
   { k: 'ads', label: '광고', d: 'M3 11v2a1 1 0 0 0 1 1h2l5 4V6L6 10H4a1 1 0 0 0-1 1zM15 9a3 3 0 0 1 0 6M18 6a7 7 0 0 1 0 12' }
 ];
-const GROUPS = { work: ['inbox', 'home'], ads: ['campaign', 'report'], settings: ['settings', 'auto'] };
+const GROUPS = { work: ['inbox', 'home'], ads: isLive() ? ['campaign'] : ['campaign', 'report'], settings: ['settings', 'auto'] };
 const SUBL = { inbox: '업무함', home: '대시보드', campaign: '캠페인 운영', report: '리포트', settings: '계정·연결', auto: '자동화' };
 const groupOf = sc => Object.keys(GROUPS).find(g => GROUPS[g].includes(sc)) || 'work';
 const FT = e => ({ PPT: 'linear-gradient(180deg,#FF8A4C,#F0602B)', PPTX: 'linear-gradient(180deg,#FF8A4C,#F0602B)', PDF: 'linear-gradient(180deg,#FF6B6B,#E5484D)', XLS: 'linear-gradient(180deg,#34C77B,#1E9E5A)', XLSX: 'linear-gradient(180deg,#34C77B,#1E9E5A)', CSV: 'linear-gradient(180deg,#34C77B,#1E9E5A)' }[e] || 'linear-gradient(180deg,#5AA8FF,#2F7BEA)');
@@ -3654,7 +3668,7 @@ class Component extends DCLogic {
     const tMax = Math.max(1, ...trendAll.map(t => t.p));
 
     // reports
-    const reps = [...(S.xr || []), ...REPORTS].filter(r => brandIds.includes(r.brand));
+    const reps = isLive() ? [] : [...(S.xr || []), ...REPORTS].filter(r => brandIds.includes(r.brand));
     const TS = S.tpls || TPL0;
     const tStep = S.tplStep;
     const tpl = {
@@ -3710,9 +3724,9 @@ class Component extends DCLogic {
     ];
     const ob = { notBuilding: !S.building, building: S.building,
       s0: S.obStep === 0, s1: S.obStep === 1, s2: S.obStep === 2,
-      dots: [0, 1, 2].map(i => ({ c: i <= S.obStep ? BLUE : '#EAE7E0' })),
-      stepLabel: `STEP ${S.obStep + 1} / 3`, title: OBT[S.obStep],
-      hasPrev: S.obStep > 0, nextLabel: S.obStep === 2 ? `비서 ${n}명으로 시작` : '다음',
+      dots: (isLive() ? [0, 1] : [0, 1, 2]).map(i => ({ c: i <= S.obStep ? BLUE : '#EAE7E0' })),
+      stepLabel: `STEP ${S.obStep + 1} / ${isLive() ? 2 : 3}`, title: OBT[S.obStep],
+      hasPrev: S.obStep > 0, nextLabel: S.obStep === (isLive() ? 1 : 2) ? (isLive() ? '메일 분석 시작' : `비서 ${n}명으로 시작`) : '다음',
       buildTitle: `${P.name || '나'} 님의 업무 환경 동기화 중`, buildPct: Math.round((S.buildStep + 1) / 6 * 100) + '%',
       buildSteps: BUILD.map(([t, sub], i) => ({ t, sub, done: i < S.buildStep, active: i === S.buildStep, wait: i > S.buildStep, c: i <= S.buildStep ? '#1C1B19' : '#B4AFA5' })) };
 
@@ -3727,7 +3741,7 @@ class Component extends DCLogic {
     const selT = T.find(t => t.taskId === IB.sel);
     const OWN = { mine: 'MY TASK', uncertain: 'NEEDS CHECK', other: 'FYI' };
     const ib = {
-      mode: isLive() ? (IB.email || 'Gmail 연결됨') : '데모 데이터 · 배포 시 Gmail 연결',
+      mode: isLive() ? (IB.email || 'Gmail 연결됨') : '데모 데이터 · 배포 시 Gmail 연결', usageText: `${IB.usage} / ${IB.limit}`,
       aliases: IB.aliases, setAliases: e => this.setIb({ aliases: e.target.value }),
       morningOn: IB.morning, morningOff: !IB.morning, toggleMorning: () => this.toggleMorning(),
       busy: IB.busy, idle: !IB.busy, liveLabel: IB.busy ? '메일 확인 중' : (IB.at ? `실시간 · ${IB.at.getHours()}:${String(IB.at.getMinutes()).padStart(2, '0')} 업데이트` : '실시간'), analyze: () => this.runAnalyze(),
@@ -3764,7 +3778,7 @@ class Component extends DCLogic {
       })),
       mainRows: groupOf(S.screen) === 'work' ? 'auto minmax(0,1fr)' : 'auto auto minmax(0,1fr)',
       topTabs: [['work', '홈'], ['ads', '광고'], ['settings', '설정']].map(([k, label]) => {
-        const on = groupOf(S.screen) === k, badge = k === 'work' ? G.mine.length : k === 'ads' ? pendingTotal + repPending : 0;
+        const on = groupOf(S.screen) === k, badge = k === 'work' ? G.mine.length : k === 'ads' ? pendingTotal + repPending + S.adReqs.length : 0;
         return { label, hasBadge: badge > 0, badge, bg: on ? '#fff' : 'transparent', fg: on ? '#1C1B19' : '#8F8A80', sh: on ? '0 1px 3px rgba(28,27,25,0.08)' : 'none', go: () => this.setState(s => ({ screen: (s.lastSub || {})[k] || GROUPS[k][0], aside: null, dd: null })) };
       }),
       music: { on: !!S.music, label: S.music ? 'Lo-fi' : '음악', title: S.music ? '음악 끄기' : '집중 음악 켜기', bg: S.music ? '#1C1B19' : '#fff', fg: S.music ? '#fff' : '#3A3731', toggle: () => this.toggleMusic() },
@@ -3772,7 +3786,7 @@ class Component extends DCLogic {
       ib, is: { inbox: groupOf(S.screen) === 'work', home: groupOf(S.screen) === 'work', campaign: S.screen === 'campaign', chat: S.screen === 'chat', auto: S.screen === 'auto', report: S.screen === 'report', settings: S.screen === 'settings' },
       dd: { homeOpen: S.dd === 'home', campOpen: S.dd === 'camp', toggleHome: () => this.setState({ dd: S.dd === 'home' ? null : 'home' }), toggleCamp: () => this.setState({ dd: S.dd === 'camp' ? null : 'camp' }) },
 
-      greeting: `좋은 아침이에요, ${P.name || '나'} 님`,
+      greeting: `${(h => h < 12 ? '좋은 아침이에요' : h < 18 ? '좋은 오후예요' : '좋은 저녁이에요')(new Date().getHours())}, ${P.name || '나'} 님`,
       statusLine: `${new Date().getMonth() + 1}월 ${new Date().getDate()}일 ${['일', '월', '화', '수', '목', '금', '토'][new Date().getDay()]}요일 · 내 업무 ${G.mine.length}건 · 회신 필요 ${G.mine.filter(t => t.needsReply).length}건`,
       headerPending: pendingTotal > 0, headerBusy: pendingTotal === 0 && anyBusy, headerDone: pendingTotal === 0 && !anyBusy,
       pendingTotal, approveAll: () => this.approveIds(vis.map(i => i.id)),
@@ -3819,7 +3833,9 @@ class Component extends DCLogic {
       scrimOpacity: asideOpen && (this.props.dimBackground ?? true) ? 1 : 0, scrimEvents: asideOpen ? 'auto' : 'none',
       toast: { show: !!S.toast, text: S.toast ? S.toast.text : '' },
 
-      campStatus: `브랜드 ${cIds.length}개 · 캠페인 ${crow.length}개`,
+      campStatus: isLive() ? `세팅 요청 ${S.adReqs.length}건` : `브랜드 ${cIds.length}개 · 캠페인 ${crow.length}개`,
+      showAdStrip: !isLive(), showAdsSample: !isLive(), showCosmetic: !isLive(), isLiveMode: isLive(),
+      campGridCols: isLive() ? 'minmax(0,1fr)' : 'minmax(0,2fr) minmax(0,1fr)',
       campName: campSel('all') ? '전체' : bname(S.campBrand),
       campHasPending: qPending > 0, campPendingLabel: `${qPending}건 모두 승인`,
       approveCampQueue: () => this.approveIds(queue.map(i => i.id)),
@@ -3881,7 +3897,7 @@ class Component extends DCLogic {
       channelChips: CHANNELS.map(ch => { const on = P.channels.includes(ch); return { name: ch, ...chip(on), toggle: () => this.setProfile({ channels: on ? P.channels.filter(x => x !== ch) : [...P.channels, ch] }) }; }),
       toolChips: TOOLS.map(t => { const on = P.tools.includes(t); return { name: t, ...chip(on), toggle: () => this.setProfile({ tools: on ? P.tools.filter(x => x !== t) : [...P.tools, t] }) }; }),
       obPrev: () => this.setState(s => ({ obStep: Math.max(0, s.obStep - 1) })),
-      obNext: () => { if (S.obStep === 0 && !(P.name || '').trim()) return this.showToast('이름을 입력해 주세요'); if (S.obStep < 2) this.setState({ obStep: S.obStep + 1 }); else this.startBuild(); },
+      obNext: () => { if (S.obStep === 0 && !(P.name || '').trim()) return this.showToast('이름을 입력해 주세요'); if (S.obStep < (isLive() ? 1 : 2)) this.setState({ obStep: S.obStep + 1 }); else this.startBuild(); },
       quickStart: () => { if (isLive() && !(P.name || '').trim()) return this.showToast('이름을 입력해 주세요'); this.setState({ profile: { ...defaultProfile(P.role), name: P.name || '지호' } }); setTimeout(() => this.startBuild(), 0); },
       saveNow: () => this.saveProfileNow(),
       noop: () => {}
