@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <base target="_top">
 <title>WISE Assistant</title>
-<!-- 생성 파일. 수정은 design/AI 비서 홈 v3.dc.html 에서 하고 node tools/build-index.mjs 로 다시 만든다. (2026-10-22 05:57 UTC) -->
+<!-- 생성 파일. 수정은 design/AI 비서 홈 v3.dc.html 에서 하고 node tools/build-index.mjs 로 다시 만든다. (2026-10-22 06:01 UTC) -->
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Manrope:wght@500;600;700;800&family=Montserrat:wght@600;700&display=swap">
 <style>
@@ -2749,6 +2749,12 @@ window.__resources = window.__resources || {};
       <sc-if value="{{ aside.isPlan }}">
         <div style="display:flex;flex-direction:column;gap:14px;animation:fadeUp .25s ease">
           <span style="font-size:12.5px;color:#6F6B63;font-weight:600;line-height:1.45">{{ aside.pl.subject }}</span>
+          <sc-if value="{{ aside.pl.asking }}">
+            <div style="display:flex;flex-direction:column;gap:12px;animation:fadeUp .25s ease">
+              <div style="display:flex;gap:10px;align-items:flex-start"><div style="width:32px;height:32px;flex:none;border-radius:50%;background:linear-gradient(160deg,#7DBBFF 0%,#3182F6 60%,#2468E0 100%);display:flex;align-items:center;justify-content:center;gap:5px"><span style="width:4px;height:8px;border-radius:2px;background:#fff"></span><span style="width:4px;height:8px;border-radius:2px;background:#fff"></span></div><div style="flex:1;padding:12px 15px;border-radius:14px;background:#EEF0F3;font-size:13.5px;line-height:1.65;white-space:pre-line;word-break:keep-all">{{ aside.pl.askText }}</div></div>
+              <div style="padding-left:42px;display:flex;flex-direction:column;gap:4px"><span style="font-size:14px;font-weight:800">이대로 메타 세팅안을 만들까요?</span><span style="font-size:12px;color:#8F8A80;font-weight:600;line-height:1.5">메일 본문과 첨부·Drive 자료(미디어플랜·네이밍·UTM·소재)를 읽어 캠페인·광고세트·광고 안을 만듭니다. 확인 후 승인하면 메타에 일시정지 상태로 생성됩니다.</span></div>
+            </div>
+          </sc-if>
           <sc-if value="{{ aside.pl.building }}">
             <div style="display:flex;align-items:center;gap:10px;padding:14px;border-radius:12px;background:#F0F9F5;font-size:13px;font-weight:700;color:#0E9F7E">{{ spinner }}{{ aside.pl.phase }}</div>
           </sc-if>
@@ -2836,6 +2842,10 @@ window.__resources = window.__resources || {};
         <button onClick="{{ aside.sg.copy }}" style="width:100%;height:40px;border:1px solid #EAE7E0;border-radius:10px;background:#fff;color:#3A3731;font-size:13px;font-weight:700;cursor:pointer" style-hover="background:#F5F5F7">프롬프트 복사</button>
       </sc-if>
       <sc-if value="{{ aside.isPlan }}">
+        <sc-if value="{{ aside.pl.asking }}">
+          <button onClick="{{ aside.pl.askYes }}" style="width:100%;height:44px;border:0;border-radius:10px;background:#1C1B19;color:#fff;font-size:14px;font-weight:700;cursor:pointer" style-hover="background:#3A3833" style-active="transform:scale(0.97)">네, 세팅안 만들기</button>
+          <button onClick="{{ aside.pl.askNo }}" style="width:100%;height:40px;border:1px solid #EAE7E0;border-radius:10px;background:#fff;color:#3A3731;font-size:13px;font-weight:700;cursor:pointer" style-hover="background:#F5F5F7">아니요</button>
+        </sc-if>
         <sc-if value="{{ aside.pl.canExec }}"><button onClick="{{ aside.pl.exec }}" style="width:100%;height:44px;border:0;border-radius:10px;background:{{ aside.pl.execBg }};color:#fff;font-size:14px;font-weight:700;cursor:pointer;transition:background .2s" style-active="transform:scale(0.97)">{{ aside.pl.execLabel }}</button></sc-if>
         <sc-if value="{{ aside.pl.executing }}"><div style="height:44px;border-radius:10px;background:#E2F5EE;color:#0E9F7E;font-size:13.5px;font-weight:700;display:flex;align-items:center;justify-content:center;gap:8px">{{ spinner }}메타에 생성 중 · 일시정지</div></sc-if>
         <sc-if value="{{ aside.pl.undoing }}"><div style="height:44px;border-radius:10px;background:#EEF0F3;color:#56524A;font-size:13.5px;font-weight:700;display:flex;align-items:center;justify-content:center;gap:8px">{{ spinner }}삭제 중</div></sc-if>
@@ -3341,14 +3351,15 @@ class Component extends DCLogic {
     this.setState(s => ({ autos: s.autos.map((x, j) => j === i ? { ...x, ...patch } : x) }));
     if (isLive()) gs('setAutomation', a.id, { on: 'on' in patch ? patch.on : a.on, mode: patch.mode || a.mode }).then(r => { if (!r.ok) this.showToast(r.error.message); });
   }
-  openPlan(req) {
+  /** 세팅 진입: 이미 만든 세팅안이 있으면 바로 열고, 없으면 "이렇게 세팅할까요?" 확인부터 */
+  openPlan(req, task) {
     const d = this.state.adDrafts[req.threadId];
-    if (d) return this.setState({ adDraft: d, adErr: null, adConfirm: false, adPartial: false, aside: { mode: 'adplan' }, dd: null });
-    this.buildPlan(req);
+    if (d) return this.setState({ adDraft: d, adAsk: null, adErr: null, adConfirm: false, adPartial: false, aside: { mode: 'adplan' }, dd: null });
+    this.setState({ adAsk: { req, task: task || null }, adDraft: { threadId: req.threadId, subject: req.subject, plan: null }, adErr: null, adConfirm: false, adPartial: false, aside: { mode: 'adplan' }, dd: null });
   }
   async buildPlan(req, extraLink) {
     if (this.state.adBusy) return;
-    this.setState({ adBusy: 'build', adErr: null, adConfirm: false, adPartial: false, adDraft: { threadId: req.threadId, subject: req.subject, plan: null }, aside: { mode: 'adplan' }, dd: null });
+    this.setState({ adBusy: 'build', adAsk: null, adErr: null, adConfirm: false, adPartial: false, adDraft: { threadId: req.threadId, subject: req.subject, plan: null }, aside: { mode: 'adplan' }, dd: null });
     const phases = ['메일 읽는 중', 'Drive 자료 읽는 중 · 미디어플랜 · 네이밍 · UTM 규칙', '세팅안 작성 중', '관심사 · 지역 후보 검색 중'];
     let i = 0;
     this.setState({ adPhase: phases[0] });
@@ -3490,7 +3501,7 @@ class Component extends DCLogic {
       const req = S.adReqs[0] || (() => { const k = (S.ib.tasks || []).find(x => x.status !== 'completed' && /세팅|셋팅/.test(x.title + ' ' + x.request)); return k ? { threadId: k.threadId, subject: k.title } : null; })();
       if (!req) return '세팅 요청 메일이 없어요 · 제목에 "세팅"이 들어간 메일이 있어야 세팅안을 만들 수 있어요';
       this.openPlan(req);
-      return `${req.subject}\n세팅안 만드는 중 · 오른쪽 패널에서 확인하고 "메타에 세팅"을 누르면 일시정지 상태로 생성돼요`;
+      return `${req.subject}\n오른쪽에서 요청 내용을 확인하고 "네, 세팅안 만들기"를 누르면 세팅안을 만들어요. 그다음 "메타에 세팅"을 누르면 일시정지 상태로 생성돼요`;
     }
     const go = /보내|발송|승인|처리|반영|올려|진행/.test(t);
     if (!go) return null;
@@ -3672,7 +3683,7 @@ class Component extends DCLogic {
         },
         replyBtn: (r.to && r.to.length) ? `Gmail 전체회신 열기 · ${1 + (r.cc || []).length}명` : 'Gmail에서 답장 열기',
         canAdPlan: isLive(), planBtn: S.adDrafts[t.threadId] ? '세팅안 보기' : '메타 세팅안 만들기',
-        makePlan: () => this.openPlan({ threadId: t.threadId, subject: t.title }) };
+        makePlan: () => this.openPlan({ threadId: t.threadId, subject: t.title }, t) };
     };
     const repView = S.repeats.map(g => ({ message: g.message, sub: `${g.count}회${g.cadence ? ' · ' + g.cadence : ''}${g.requesters && g.requesters.length ? ' · ' + g.requesters.join(', ') : ''}`,
       idle: S.sugBusy !== g.groupId, busy: S.sugBusy === g.groupId, yes: () => this.askSuggest(g), no: () => this.dismissRepeat(g) }));
@@ -3685,7 +3696,13 @@ class Component extends DCLogic {
     const D = S.adDraft, PL = D && D.plan, EX = D && D.executed, OBJ = { OUTCOME_TRAFFIC: '트래픽', OUTCOME_AWARENESS: '도달' };
     const handoffText = ex => !ex || !ex.handoff ? '' : `메타 테스트 계정 ${ex.accountId}에 아래 광고를 PAUSED로 만들어줘. 페이지는 광고 권한 있는 페이지로.\n` +
       ex.handoff.map(h => `- 광고세트 ${h.adsetId} / 광고명 ${h.adName}` + (h.objectStoryId ? ` / 기존 게시물 ${h.objectStoryId}` : ` / image_hash ${h.imageHash} / 링크 ${h.link} / url_tags ${h.urlTags} / 본문 "${h.message}" / 제목 "${h.headline}" / CTA LEARN_MORE`)).join('\n');
+    const ask = S.adAsk, askT = ask && ask.task, askR = ask && ask.req;
+    const askText = !ask ? '' : askT
+      ? [`요청 · ${askT.request || askT.title}`, `요청자 ${askT.requester || '—'} · 마감 ${askT.dueText || (askT.dueDate ? askT.dueDate.slice(5).replace('-', '.') : '미정')}`, askT.nextAction ? `다음 할 일 · ${askT.nextAction}` : ''].filter(Boolean).join('\n')
+      : [`메일 · ${askR.subject}`, askR.from ? `보낸 사람 ${String(askR.from).replace(/<.*$/, '').trim()}` : '', askR.snippet ? `"${askR.snippet}"` : ''].filter(Boolean).join('\n');
     const plView = {
+      asking: !!ask && !PL && S.adBusy !== 'build', askText,
+      askYes: () => this.buildPlan(ask.req), askNo: () => this.setState({ adAsk: null, adDraft: null, aside: null }),
       building: S.adBusy === 'build', phase: S.adPhase, subject: D ? D.subject || '' : '',
       ready: !!PL && !(EX && EX.campaignId) && S.adBusy !== 'build', done: !!(EX && EX.campaignId), executing: S.adBusy === 'exec', undoing: S.adBusy === 'undo',
       account: PL ? (PL.adAccountName || PL.adAccountId || '') : '', sources: D && D.sources ? D.sources.map(x => x.name).join(' · ') : '', hasSources: !!(D && D.sources && D.sources.length),
