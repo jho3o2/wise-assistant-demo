@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <base target="_top">
 <title>WISE Assistant</title>
-<!-- 생성 파일. 수정은 design/AI 비서 홈 v3.dc.html 에서 하고 node tools/build-index.mjs 로 다시 만든다. (2026-10-22 05:28 UTC) -->
+<!-- 생성 파일. 수정은 design/AI 비서 홈 v3.dc.html 에서 하고 node tools/build-index.mjs 로 다시 만든다. (2026-10-22 05:31 UTC) -->
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Manrope:wght@500;600;700;800&family=Montserrat:wght@600;700&display=swap">
 <style>
@@ -2019,7 +2019,10 @@ window.__resources = window.__resources || {};
         </sc-if>
         <div style="flex:1;min-height:0;background:rgba(255,255,255,0.92);backdrop-filter:saturate(180%) blur(20px);border:1px solid rgba(0,0,0,0.04);border-radius:22px;box-shadow:0 1px 2px rgba(0,0,0,0.03),0 10px 30px rgba(0,0,0,0.04);padding:16px 18px;display:flex;flex-direction:column;gap:8px;overflow:hidden">
           <div style="display:flex;align-items:center;justify-content:space-between"><div style="display:flex;flex-direction:column;gap:2px"><span style="font-family:inherit;font-size:10px;font-weight:700;letter-spacing:0.12em;color:#8F8A80">APPROVAL</span><span style="font-size:13px;font-weight:800;white-space:nowrap">광고 승인 대기</span></div>
+            <div style="display:flex;align-items:center;gap:6px">
             <sc-if value="{{ adPending }}"><button onClick="{{ approveAll }}" style="height:28px;padding:0 10px;border:0;border-radius:8px;background:#1C1B19;color:#fff;font-size:12px;font-weight:700;cursor:pointer;white-space:nowrap" style-hover="background:#3A3833">모두 승인 {{ pendingTotal }}</button></sc-if>
+            <button onClick="{{ refreshAds }}" title="세팅 요청 메일 다시 찾기" style="width:28px;height:28px;border:0;border-radius:8px;background:transparent;color:#8F8A80;cursor:pointer;display:flex;align-items:center;justify-content:center" style-hover="background:rgba(118,118,128,0.12);color:#1C1B19"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 12a8 8 0 1 1-2.3-5.7M20 4v5h-5"></path></svg></button>
+            </div>
           </div>
           <div style="flex:1;min-height:0;overflow:auto;display:flex;flex-direction:column">
             <sc-for list="{{ homeQueue }}" as="it" hint-placeholder-count="4">
@@ -2030,7 +2033,7 @@ window.__resources = window.__resources || {};
                 <sc-if value="{{ it.done }}"><span style="font-size:12px;color:#0E9F7E;font-weight:700;white-space:nowrap">✓</span></sc-if>
               </div>
             </sc-for>
-            <sc-if value="{{ adClear }}"><div style="padding:14px 0;font-size:12px;color:#B4AFA5;font-weight:600">대기 없음</div></sc-if>
+            <sc-if value="{{ adClear }}"><div style="padding:14px 0;font-size:12px;color:#B4AFA5;font-weight:600;line-height:1.5">{{ adEmptyText }}</div></sc-if>
           </div>
         </div>
       </div>
@@ -2329,7 +2332,7 @@ window.__resources = window.__resources || {};
                   <span style="font-size:12px;color:#8F8A80;font-weight:600;line-height:1.45">{{ it.s }}</span>
                 </div>
               </sc-for>
-              <sc-if value="{{ campQueueEmpty }}"><div style="padding:20px 0;font-size:12.5px;color:#B4AFA5">대기 없음</div></sc-if>
+              <sc-if value="{{ campQueueEmpty }}"><div style="padding:20px 0;font-size:12.5px;color:#B4AFA5;line-height:1.5">{{ adEmptyText }}</div></sc-if>
             </div>
           </div>
         </div>
@@ -3795,7 +3798,9 @@ class Component extends DCLogic {
       statusLine: `${new Date().getMonth() + 1}월 ${new Date().getDate()}일 ${['일', '월', '화', '수', '목', '금', '토'][new Date().getDay()]}요일 · 내 업무 ${G.mine.length}건 · 회신 필요 ${G.mine.filter(t => t.needsReply).length}건`,
       headerPending: pendingTotal > 0, headerBusy: pendingTotal === 0 && anyBusy, headerDone: pendingTotal === 0 && !anyBusy,
       pendingTotal, approveAll: () => this.approveIds(vis.map(i => i.id)),
-      adPending: pendingTotal > 0, adClear: pendingTotal === 0 && !adReqRows.length, goAds: () => this.setState({ screen: 'campaign', aside: null, dd: null }),
+      adPending: pendingTotal > 0, adClear: pendingTotal === 0 && !adReqRows.length,
+      adEmptyText: !isLive() ? '대기 없음' : S.adMeta && S.adMeta.forbidden ? '광고 세팅 권한 없는 계정 · @wisebirds.com 계정으로 접속' : S.adMeta && S.adMeta.error ? S.adMeta.error : '세팅 요청 메일 없음 · 최근 7일, 제목에 "세팅" + Drive 링크',
+      refreshAds: async e => { e && e.stopPropagation && e.stopPropagation(); await this.refreshSide(); this.showToast(`세팅 요청 메일 ${this.state.adReqs.length}건`); }, goAds: () => this.setState({ screen: 'campaign', aside: null, dd: null }),
       adStrip: { caps: isLive() ? 'ADS · 샘플 데이터' : 'ADS · 어제', title: `브랜드 ${brandIds.length}개 · Spend ${man(brandIds.reduce((a, id) => a + kpiOf(id).spend, 0))}`, n: Math.max(1, Math.min(4, brandIds.length)), rows: brandIds.slice(0, 4).map(id => { const k = kpiOf(id); return { name: bname(id), roas: k.roas + '%', roasD: arrow(k.roasD), roasC: k.roasD < 0 ? RED : BLUE, cpa: won(k.spend / k.conv) }; }) },
       filterName: homeSel('all') ? '전체' : bname(S.filter),
       brandChips: [{ id: 'all', name: '전체' }, ...P.brands].map(b => ({ name: b.name, ...pick(homeSel(b.id)), pick: () => this.setState({ filter: b.id, dd: null }) })),
