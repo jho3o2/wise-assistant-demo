@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <base target="_top">
 <title>WISE Assistant</title>
-<!-- 생성 파일. 수정은 design/AI 비서 홈 v3.dc.html 에서 하고 node tools/build-index.mjs 로 다시 만든다. (2026-10-22 06:35 UTC) -->
+<!-- 생성 파일. 수정은 design/AI 비서 홈 v3.dc.html 에서 하고 node tools/build-index.mjs 로 다시 만든다. (2026-10-22 06:37 UTC) -->
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Manrope:wght@500;600;700;800&family=Montserrat:wght@600;700&display=swap">
 <style>
@@ -2345,10 +2345,10 @@ window.__resources = window.__resources || {};
           <div style="background:rgba(255,255,255,0.92);backdrop-filter:saturate(180%) blur(20px);border:1px solid rgba(0,0,0,0.04);border-radius:22px;box-shadow:0 1px 2px rgba(0,0,0,0.03),0 10px 30px rgba(0,0,0,0.04);padding:16px 18px;display:flex;flex-direction:column;gap:12px;min-height:0;overflow:hidden">
             <div style="display:flex;align-items:center;justify-content:space-between;gap:12px">
               <div style="display:flex;flex-direction:column;gap:4px"><span style="font-family:inherit;font-size:10px;font-weight:700;letter-spacing:0.12em;color:#8F8A80">INBOX</span><span style="font-size:15px;font-weight:800;white-space:nowrap">오늘 할 일</span></div>
-              <div style="display:flex;align-items:center;gap:8px;font-size:12px;font-weight:600;color:#8F8A80;white-space:nowrap">
+              <div style="display:flex;align-items:center;gap:8px;font-size:12px;font-weight:600;color:#8F8A80;white-space:nowrap;min-width:0;flex:1;justify-content:flex-end">
                 <sc-if value="{{ ib.busy }}">{{ spinner }}</sc-if>
-                <sc-if value="{{ ib.idle }}" hint-placeholder-val="{{ true }}"><span style="width:7px;height:7px;border-radius:50%;background:#0E9F7E"></span></sc-if>
-                {{ ib.liveLabel }}
+                <sc-if value="{{ ib.idle }}" hint-placeholder-val="{{ true }}"><span style="width:7px;height:7px;border-radius:50%;background:#0E9F7E;flex:none"></span></sc-if>
+                <span style="min-width:0;overflow:hidden;text-overflow:ellipsis">{{ ib.liveLabel }}</span>
                 <button onClick="{{ px.inbox.toggle }}" title="{{ px.inbox.title }}" style="width:28px;height:28px;border:0;border-radius:50%;background:rgba(118,118,128,0.12);color:#3A3731;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:transform .2s" style-active="transform:scale(0.9)"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="{{ px.inbox.d }}"></path></svg></button><button onClick="{{ ib.analyze }}" title="지금 새로고침" style="width:28px;height:28px;border:0;border-radius:8px;background:transparent;color:#8F8A80;cursor:pointer;display:flex;align-items:center;justify-content:center" style-hover="background:rgba(118,118,128,0.12);color:#1C1B19"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 12a8 8 0 1 1-2.3-5.7M20 4v5h-5"></path></svg></button>
               </div>
             </div>
@@ -3167,6 +3167,7 @@ const TPL0 = [
 ];
 const chOf = i => !i ? '' : (i.kind === 'mail' || i.kind === 'billing') ? 'Gmail' : i.kind === 'msg' ? (/팀즈/.test(i.from) ? 'Teams' : '카카오톡') : '';
 const KEY = 'assistant-home-v3';
+const PIN_QUERY = 'WISE테스트'; // 시연용 메일 표식 · 기본 분석에 항상 포함
 const LIVE_URL = 'https://script.google.com/macros/s/AKfycbxyn1nPhLd8T2lfTgZ7EVzuK9mZO1tHr0YkXXAo_rL5TlEdXaJFeQzSlfqiYcG0F_sP/exec';
 const BLUE = '#0E9F7E', RED = '#F04452', GREEN = '#0E9F7E', INK = '#3A3731';
 const won = n => '₩' + Math.round(n).toLocaleString();
@@ -3264,9 +3265,9 @@ class Component extends DCLogic {
     const S = this.state, P = S.profile;
     if (S.ib.busy) return;
     if (!(P.name || '').trim()) return silent ? null : this.showToast('설정에서 이름을 먼저 입력해 주세요');
-    this.setIb({ busy: true, done: 0, total: 0, phase: '프로필 저장' });
+    this.setIb({ busy: true, done: 0, total: 0, phase: '프로필 저장', lastError: null });
     const role = (ROLES.find(r => r.k === P.role) || {}).name || '';
-    const fail = r => { this.setIb({ busy: false }); this.showToast(r.error ? r.error.message : '오류가 발생했어요'); };
+    const fail = r => { const msg = r.error ? r.error.message : '오류가 발생했어요'; this.setIb({ busy: false, lastError: msg }); this.showToast(msg); };
     const sp = await gs('saveProfile', this.profilePayload());
     if (!sp.ok) return fail(sp);
     this.setIb({ phase: '최근 2일 메일 찾는 중' });
@@ -3275,7 +3276,13 @@ class Component extends DCLogic {
     const q = q0 && !/\s|:|"/.test(q0) ? `(${q0} OR WISE${q0} OR subject:${q0})` : q0;
     const lt = await gs('listThreads', q ? { days: 7, maxThreads: 15, query: q } : { days: 2, maxThreads: 15 });
     if (!lt.ok) return fail(lt);
-    const ids = lt.data.threadIds, batches = [];
+    let ids = lt.data.threadIds;
+    if (!q && isLive()) {
+      // 검색어가 없을 때도 시연 메일(WISE테스트)은 항상 앞에 끼워 넣는다 (최대 15개 안에서)
+      const pin = await gs('listThreads', { days: 7, maxThreads: 15, query: PIN_QUERY });
+      if (pin.ok) { const set = new Set(pin.data.threadIds); ids = [...pin.data.threadIds, ...ids.filter(x => !set.has(x))].slice(0, 15); }
+    }
+    const batches = [];
     for (let i = 0; i < ids.length; i += 5) batches.push(ids.slice(i, i + 5));
     this.setIb({ total: batches.length, scope: lt.data.scope, stats: lt.data.stats, phase: '업무 분석 중' });
     let failures = 0;
@@ -3897,7 +3904,7 @@ class Component extends DCLogic {
       mode: isLive() ? (IB.email || 'Gmail 연결됨') : '데모 데이터 · 배포 시 Gmail 연결', usageText: `${IB.usage} / ${IB.limit}`,
       aliases: IB.aliases, setAliases: e => this.setIb({ aliases: e.target.value }),
       morningOn: IB.morning, morningOff: !IB.morning, toggleMorning: () => this.toggleMorning(),
-      busy: IB.busy, idle: !IB.busy, liveLabel: (IB.busy ? '메일 확인 중' : (IB.at ? `실시간 · ${IB.at.getHours()}:${String(IB.at.getMinutes()).padStart(2, '0')} 업데이트` : '실시간')) + ((S.mailQuery || '').trim() ? ` · "${S.mailQuery.trim()}" 메일만` : ''), analyze: () => this.runAnalyze(),
+      busy: IB.busy, idle: !IB.busy, liveLabel: (IB.busy ? '메일 확인 중' : (IB.at ? `${IB.at.getHours()}:${String(IB.at.getMinutes()).padStart(2, '0')} 업데이트` : '실시간')) + ((S.mailQuery || '').trim() ? ` · "${S.mailQuery.trim()}"만` : ''), analyze: () => this.runAnalyze(),
       mailQuery: S.mailQuery, setMailQuery: e => { const v = e.target.value; this.setState({ mailQuery: v }); try { localStorage.setItem(KEY + '-q', v); } catch (x) {} },
       onMailQueryKey: e => { if (e.key === 'Enter' && !e.nativeEvent.isComposing) { e.target.blur(); this.setIb({ tasks: [] }); this.runAnalyze(); } },
       applyMailQuery: () => { this.setIb({ tasks: [] }); this.runAnalyze(); },
@@ -3912,7 +3919,7 @@ class Component extends DCLogic {
       ].map(k => ({ ...k, c: k.v ? k.c : '#B0B8C1', go: () => this.setIb({ tab: k.tab }) })),
       tabs: [['mine', '내 업무'], ['uncertain', '확인 필요'], ['other', '타인·참고'], ['done', '완료']].map(([k, name]) => ({ name, n: G[k].length, bg: IB.tab === k ? '#fff' : 'transparent', fg: IB.tab === k ? '#1C1B19' : '#8F8A80', sh: IB.tab === k ? '0 1px 3px rgba(28,27,25,0.08)' : 'none', pick: () => this.setIb({ tab: k }) })),
       list: cur.map((t, i) => ({ dl: Math.min(i, 6) * 40 + 'ms', title: t.title, requester: t.requester, due: fmtDue(t), needsReply: t.needsReply && t.status !== 'completed', pl: PR[t.priority][0], pc: PR[t.priority][1], pbg: PR[t.priority][2], tc: t.status === 'completed' ? '#8F8A80' : '#1C1B19', bg: IB.sel === t.taskId ? '#F0F9F5' : 'transparent', pick: () => this.setIb({ sel: t.taskId }) })),
-      empty: cur.length === 0, emptyText: IB.busy ? '불러오는 중' : '0건',
+      empty: cur.length === 0, emptyText: IB.busy ? '불러오는 중' : IB.lastError ? `분석 실패 · ${IB.lastError}` : (IB.analyzedOnce ? '0건' : '메일 분석 전 · 오른쪽 위 새로고침'),
       repeats: repView,
       hasSel: !!selT, noSel: !selT, selTf: selT && groupOf(S.screen) === 'work' && !S.aside ? 'translateX(0)' : 'translateX(110%)', close: () => this.setIb({ sel: null }), // 세팅안·제안 패널이 열리면 상세는 잠시 숨긴다
       sel: selT ? { caps: OWN[selT.ownership] || 'TASK', title: selT.title, requester: selT.requester, due: fmtDue(selT), prReason: selT.priorityReason, request: selT.request, next: selT.nextAction || '—', reason: selT.ownershipReason || '—', quote: selT.evidenceQuote || '—', url: selT.gmailUrl, doneLabel: selT.status === 'completed' ? '완료 취소' : '완료로 표시', doneBg: selT.status === 'completed' ? '#EEF0F3' : '#1C1B19', doneFg: selT.status === 'completed' ? '#56524A' : '#fff', toggleDone: () => this.toggleTask(selT), ...rdView(selT) } : {}
