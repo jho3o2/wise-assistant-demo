@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <base target="_top">
 <title>WISE Assistant</title>
-<!-- 생성 파일. 수정은 design/AI 비서 홈 v3.dc.html 에서 하고 node tools/build-index.mjs 로 다시 만든다. (2026-10-22 06:01 UTC) -->
+<!-- 생성 파일. 수정은 design/AI 비서 홈 v3.dc.html 에서 하고 node tools/build-index.mjs 로 다시 만든다. (2026-10-22 06:08 UTC) -->
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Manrope:wght@500;600;700;800&family=Montserrat:wght@600;700&display=swap">
 <style>
@@ -2781,6 +2781,8 @@ window.__resources = window.__resources || {};
           </sc-if>
           <sc-if value="{{ aside.pl.ready }}">
             <div style="display:flex;flex-direction:column;gap:12px">
+              <div style="display:flex;gap:10px;align-items:flex-start"><div style="width:32px;height:32px;flex:none;border-radius:50%;background:linear-gradient(160deg,#7DBBFF 0%,#3182F6 60%,#2468E0 100%);display:flex;align-items:center;justify-content:center;gap:5px"><span style="width:4px;height:8px;border-radius:2px;background:#fff"></span><span style="width:4px;height:8px;border-radius:2px;background:#fff"></span></div><div style="flex:1;padding:12px 15px;border-radius:14px;background:#EEF0F3;font-size:13px;line-height:1.65;white-space:pre-line;word-break:keep-all">{{ aside.pl.summary }}</div></div>
+              <div style="padding-left:42px;display:flex;flex-direction:column;gap:2px"><span style="font-size:14px;font-weight:800">이대로 세팅할까요?</span><span style="font-size:12px;color:#8F8A80;font-weight:600">아래에서 이름·예산·타겟·문구를 고친 뒤 눌러도 됩니다</span></div>
               <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
                 <div style="display:flex;flex-direction:column;gap:2px"><span style="font-size:11px;font-weight:700;color:#8F8A80">계정</span><span style="font-size:13px;font-weight:700">{{ aside.pl.account }}</span></div>
                 <div style="display:flex;flex-direction:column;gap:2px"><span style="font-size:11px;font-weight:700;color:#8F8A80">목표 · 기간</span><span style="font-size:13px;font-weight:700;white-space:nowrap">{{ aside.pl.objective }} · {{ aside.pl.period }}</span></div>
@@ -2846,7 +2848,10 @@ window.__resources = window.__resources || {};
           <button onClick="{{ aside.pl.askYes }}" style="width:100%;height:44px;border:0;border-radius:10px;background:#1C1B19;color:#fff;font-size:14px;font-weight:700;cursor:pointer" style-hover="background:#3A3833" style-active="transform:scale(0.97)">네, 세팅안 만들기</button>
           <button onClick="{{ aside.pl.askNo }}" style="width:100%;height:40px;border:1px solid #EAE7E0;border-radius:10px;background:#fff;color:#3A3731;font-size:13px;font-weight:700;cursor:pointer" style-hover="background:#F5F5F7">아니요</button>
         </sc-if>
-        <sc-if value="{{ aside.pl.canExec }}"><button onClick="{{ aside.pl.exec }}" style="width:100%;height:44px;border:0;border-radius:10px;background:{{ aside.pl.execBg }};color:#fff;font-size:14px;font-weight:700;cursor:pointer;transition:background .2s" style-active="transform:scale(0.97)">{{ aside.pl.execLabel }}</button></sc-if>
+        <sc-if value="{{ aside.pl.canExec }}">
+          <button onClick="{{ aside.pl.execNow }}" style="width:100%;height:44px;border:0;border-radius:10px;background:#1C1B19;color:#fff;font-size:14px;font-weight:700;cursor:pointer" style-hover="background:#3A3833" style-active="transform:scale(0.97)">네, 이대로 메타에 세팅 · 일시정지</button>
+          <button onClick="{{ aside.pl.cancel }}" style="width:100%;height:40px;border:1px solid #EAE7E0;border-radius:10px;background:#fff;color:#3A3731;font-size:13px;font-weight:700;cursor:pointer" style-hover="background:#F5F5F7">아니요</button>
+        </sc-if>
         <sc-if value="{{ aside.pl.executing }}"><div style="height:44px;border-radius:10px;background:#E2F5EE;color:#0E9F7E;font-size:13.5px;font-weight:700;display:flex;align-items:center;justify-content:center;gap:8px">{{ spinner }}메타에 생성 중 · 일시정지</div></sc-if>
         <sc-if value="{{ aside.pl.undoing }}"><div style="height:44px;border-radius:10px;background:#EEF0F3;color:#56524A;font-size:13.5px;font-weight:700;display:flex;align-items:center;justify-content:center;gap:8px">{{ spinner }}삭제 중</div></sc-if>
         <sc-if value="{{ aside.pl.done }}"><a href="{{ aside.pl.link }}" target="_blank" style="width:100%;height:44px;border-radius:10px;background:#1C1B19;color:#fff;font-size:14px;font-weight:700;display:flex;align-items:center;justify-content:center;text-decoration:none;box-sizing:border-box" style-hover="background:#3A3833">광고관리자에서 보기</a></sc-if>
@@ -3354,9 +3359,12 @@ class Component extends DCLogic {
   /** 세팅 진입: 이미 만든 세팅안이 있으면 바로 열고, 없으면 "이렇게 세팅할까요?" 확인부터 */
   openPlan(req, task) {
     const d = this.state.adDrafts[req.threadId];
-    if (d) return this.setState({ adDraft: d, adAsk: null, adErr: null, adConfirm: false, adPartial: false, aside: { mode: 'adplan' }, dd: null });
-    this.setState({ adAsk: { req, task: task || null }, adDraft: { threadId: req.threadId, subject: req.subject, plan: null }, adErr: null, adConfirm: false, adPartial: false, aside: { mode: 'adplan' }, dd: null });
+    this.setState({ adTask: task || null, adAsk: null });
+    if (d) return this.setState({ adDraft: d, adErr: null, adConfirm: false, adPartial: false, aside: { mode: 'adplan' }, dd: null });
+    this.buildPlan(req);
   }
+  /** 확인창의 "네" — 두 번 누르는 절차 없이 바로 생성 (확인창 자체가 승인) */
+  execNow() { this.setState({ adConfirm: true }); setTimeout(() => this.execPlan(), 0); }
   async buildPlan(req, extraLink) {
     if (this.state.adBusy) return;
     this.setState({ adBusy: 'build', adAsk: null, adErr: null, adConfirm: false, adPartial: false, adDraft: { threadId: req.threadId, subject: req.subject, plan: null }, aside: { mode: 'adplan' }, dd: null });
@@ -3501,7 +3509,7 @@ class Component extends DCLogic {
       const req = S.adReqs[0] || (() => { const k = (S.ib.tasks || []).find(x => x.status !== 'completed' && /세팅|셋팅/.test(x.title + ' ' + x.request)); return k ? { threadId: k.threadId, subject: k.title } : null; })();
       if (!req) return '세팅 요청 메일이 없어요 · 제목에 "세팅"이 들어간 메일이 있어야 세팅안을 만들 수 있어요';
       this.openPlan(req);
-      return `${req.subject}\n오른쪽에서 요청 내용을 확인하고 "네, 세팅안 만들기"를 누르면 세팅안을 만들어요. 그다음 "메타에 세팅"을 누르면 일시정지 상태로 생성돼요`;
+      return `${req.subject}\n메일과 첨부를 읽어 세팅안을 만드는 중이에요. 오른쪽에서 "이렇게 세팅할게요"를 확인하고 "네"를 누르면 메타에 일시정지 상태로 생성돼요`;
     }
     const go = /보내|발송|승인|처리|반영|올려|진행/.test(t);
     if (!go) return null;
@@ -3700,8 +3708,20 @@ class Component extends DCLogic {
     const askText = !ask ? '' : askT
       ? [`요청 · ${askT.request || askT.title}`, `요청자 ${askT.requester || '—'} · 마감 ${askT.dueText || (askT.dueDate ? askT.dueDate.slice(5).replace('-', '.') : '미정')}`, askT.nextAction ? `다음 할 일 · ${askT.nextAction}` : ''].filter(Boolean).join('\n')
       : [`메일 · ${askR.subject}`, askR.from ? `보낸 사람 ${String(askR.from).replace(/<.*$/, '').trim()}` : '', askR.snippet ? `"${askR.snippet}"` : ''].filter(Boolean).join('\n');
+    const won0 = n => '₩' + Number(n || 0).toLocaleString();
+    const summary = !PL ? '' : [
+      `메일 요청 · ${(S.adTask && (S.adTask.request || S.adTask.title)) || D.subject || ''}`,
+      '',
+      '이렇게 세팅할게요',
+      `· 계정 ${PL.adAccountName || PL.adAccountId}`,
+      `· 캠페인 ${PL.campaign.name} · ${OBJ[PL.campaign.objective] || PL.campaign.objective} · ${PL.campaign.startDate || '?'} ~ ${PL.campaign.endDate || '?'}`,
+      ...PL.adsets.map(a => `· 광고세트 ${a.name} — ${a.ageMin}–${a.ageMax}세 · ${(a.regions || []).map(r => r.name).join(', ') || '전국'}${(a.interests || []).length ? ' · 관심사 ' + a.interests.map(x => x.name).join(', ') : ''} · 일 ${won0(a.dailyBudget)}`),
+      ...(PL.ads.length ? PL.ads.map(a => `· 광고 ${a.name} — 소재 ${a.imageFileName || (a.existingPostId ? '기존 게시물' : '없음')}`) : ['· 광고 없음 (소재 미첨부) · 캠페인·광고세트만 생성']),
+      '· 일시정지(PAUSED)로 만들고, 집행은 광고관리자에서 켤 때 시작'
+    ].join('\n');
     const plView = {
-      asking: !!ask && !PL && S.adBusy !== 'build', askText,
+      asking: !!ask && !PL && S.adBusy !== 'build', askText, summary, hasSummary: !!PL && !(EX && EX.campaignId),
+      execNow: () => this.execNow(), cancel: () => this.setState({ aside: null }),
       askYes: () => this.buildPlan(ask.req), askNo: () => this.setState({ adAsk: null, adDraft: null, aside: null }),
       building: S.adBusy === 'build', phase: S.adPhase, subject: D ? D.subject || '' : '',
       ready: !!PL && !(EX && EX.campaignId) && S.adBusy !== 'build', done: !!(EX && EX.campaignId), executing: S.adBusy === 'exec', undoing: S.adBusy === 'undo',
@@ -3869,7 +3889,7 @@ class Component extends DCLogic {
       list: cur.map((t, i) => ({ dl: Math.min(i, 6) * 40 + 'ms', title: t.title, requester: t.requester, due: fmtDue(t), needsReply: t.needsReply && t.status !== 'completed', pl: PR[t.priority][0], pc: PR[t.priority][1], pbg: PR[t.priority][2], tc: t.status === 'completed' ? '#8F8A80' : '#1C1B19', bg: IB.sel === t.taskId ? '#F0F9F5' : 'transparent', pick: () => this.setIb({ sel: t.taskId }) })),
       empty: cur.length === 0, emptyText: IB.busy ? '불러오는 중' : '0건',
       repeats: repView,
-      hasSel: !!selT, noSel: !selT, selTf: selT && groupOf(S.screen) === 'work' ? 'translateX(0)' : 'translateX(110%)', close: () => this.setIb({ sel: null }),
+      hasSel: !!selT, noSel: !selT, selTf: selT && groupOf(S.screen) === 'work' && !S.aside ? 'translateX(0)' : 'translateX(110%)', close: () => this.setIb({ sel: null }), // 세팅안·제안 패널이 열리면 상세는 잠시 숨긴다
       sel: selT ? { caps: OWN[selT.ownership] || 'TASK', title: selT.title, requester: selT.requester, due: fmtDue(selT), prReason: selT.priorityReason, request: selT.request, next: selT.nextAction || '—', reason: selT.ownershipReason || '—', quote: selT.evidenceQuote || '—', url: selT.gmailUrl, doneLabel: selT.status === 'completed' ? '완료 취소' : '완료로 표시', doneBg: selT.status === 'completed' ? '#EEF0F3' : '#1C1B19', doneFg: selT.status === 'completed' ? '#56524A' : '#fff', toggleDone: () => this.toggleTask(selT), ...rdView(selT) } : {}
     };
     const asideOpen = !!S.aside && (groupOf(S.screen) === 'work' || ['suggest', 'adplan'].includes(S.aside.mode));
