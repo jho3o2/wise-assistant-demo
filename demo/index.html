@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <base target="_top">
 <title>WISE Assistant</title>
-<!-- 생성 파일. 수정은 design/AI 비서 홈 v3.dc.html 에서 하고 node tools/build-index.mjs 로 다시 만든다. (2026-10-22 06:16 UTC) -->
+<!-- 생성 파일. 수정은 design/AI 비서 홈 v3.dc.html 에서 하고 node tools/build-index.mjs 로 다시 만든다. (2026-10-22 06:19 UTC) -->
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Manrope:wght@500;600;700;800&family=Montserrat:wght@600;700&display=swap">
 <style>
@@ -2773,7 +2773,7 @@ window.__resources = window.__resources || {};
               </div>
               <sc-if value="{{ aside.pl.hasHandoff }}">
                 <div style="display:flex;flex-direction:column;gap:6px;padding-top:6px">
-                  <div style="display:flex;justify-content:space-between;align-items:center"><span style="font-size:12.5px;font-weight:700;color:#B7791F">광고 {{ aside.pl.handoffN }}개는 메타 MCP로 마무리</span><button onClick="{{ aside.pl.copyHandoff }}" style="height:26px;padding:0 10px;border:1px solid #EAE7E0;border-radius:8px;background:#fff;color:#3A3731;font-size:12px;font-weight:700;cursor:pointer;white-space:nowrap">요청 복사</button></div>
+                  <div style="display:flex;justify-content:space-between;align-items:center;gap:8px"><span style="font-size:12.5px;font-weight:700;color:#B7791F">광고 {{ aside.pl.handoffN }}개는 메타 MCP(Claude)로 생성</span><div style="display:flex;gap:6px;flex:none"><button onClick="{{ aside.pl.claudeAds }}" style="height:26px;padding:0 10px;border:0;border-radius:8px;background:#1C1B19;color:#fff;font-size:12px;font-weight:700;cursor:pointer;white-space:nowrap" style-hover="background:#3A3833">Claude에서 광고 만들기</button><button onClick="{{ aside.pl.copyHandoff }}" style="height:26px;padding:0 10px;border:1px solid #EAE7E0;border-radius:8px;background:#fff;color:#3A3731;font-size:12px;font-weight:700;cursor:pointer;white-space:nowrap">요청 복사</button></div></div>
                   <textarea value="{{ aside.pl.handoff }}" onChange="{{ noop }}" rows="5" style="width:100%;box-sizing:border-box;border:1px solid #EAE7E0;border-radius:10px;background:#FAFAF9;padding:10px 12px;font-family:inherit;font-size:12px;color:#3A3731;line-height:1.55;resize:vertical;outline:none"></textarea>
                 </div>
               </sc-if>
@@ -3769,6 +3769,8 @@ class Component extends DCLogic {
       execBg: S.adConfirm ? RED : '#1C1B19', exec: () => this.execPlan(), undo: () => this.undoPlan(),
       verified: !!(EX && EX.verified), check: EX ? (EX.check || []).map(c => ({ name: c.name, st: c.status + (c.effectiveStatus && c.effectiveStatus !== c.status ? ' / ' + c.effectiveStatus : '') })) : [], link: EX && EX.link ? EX.link : '#',
       hasHandoff: !!(EX && EX.handoff && EX.handoff.length), handoffN: EX && EX.handoff ? EX.handoff.length : 0, handoff: handoffText(EX), copyHandoff: () => this.copyText(handoffText(EX), 'Claude에 붙여넣을 요청 복사됨'),
+      // 광고(게시물)는 메타 MCP가 붙은 Claude가 만든다: 요청문을 복사하고 Claude를 연다 (붙여넣고 보내면 끝)
+      claudeAds: () => { this.copyText(handoffText(EX), '요청 복사됨 · Claude 입력창에 붙여넣고 보내세요'); window.open('https://claude.ai/new?q=' + encodeURIComponent('메타 MCP로 아래 광고를 PAUSED로 만들어줘 (요청문 붙여넣기)'), '_blank', 'noopener'); },
       needLink: !!S.adErr && /Drive|링크/.test(S.adErr) && !PL, link: S.adLink || '', setLink: e => this.setState({ adLink: e.target.value }),
       retryWithLink: () => { if (!(S.adLink || '').trim()) return this.showToast('Drive 폴더나 파일 링크를 넣어 주세요'); this.buildPlan({ threadId: D.threadId, subject: D.subject }, S.adLink); },
       hasErr: !!S.adErr, err: S.adErr || '', canUndo: !S.adBusy && !!(S.adPartial || (EX && (EX.campaignId || (EX.adsetIds || []).length)))
