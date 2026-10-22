@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <base target="_top">
 <title>WISE Assistant</title>
-<!-- 생성 파일. 수정은 design/AI 비서 홈 v3.dc.html 에서 하고 node tools/build-index.mjs 로 다시 만든다. (2026-10-22 05:55 UTC) -->
+<!-- 생성 파일. 수정은 design/AI 비서 홈 v3.dc.html 에서 하고 node tools/build-index.mjs 로 다시 만든다. (2026-10-22 05:57 UTC) -->
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Manrope:wght@500;600;700;800&family=Montserrat:wght@600;700&display=swap">
 <style>
@@ -2402,15 +2402,15 @@ window.__resources = window.__resources || {};
                   <div style="display:flex;flex-direction:column;gap:8px;padding-top:12px;border-top:0.5px solid rgba(60,60,67,0.18)">
                     <div style="display:flex;justify-content:space-between;align-items:center;gap:8px"><span style="font-size:13px;font-weight:700;color:#6F6B63">답장 초안</span>
                       <sc-if value="{{ ib.sel.rdIdle }}"><button onClick="{{ ib.sel.makeDraft }}" style="height:28px;padding:0 12px;border:0;border-radius:8px;background:#E2F5EE;color:#0E9F7E;font-size:12px;font-weight:700;cursor:pointer;white-space:nowrap" style-hover="background:#CFEEE3">{{ ib.sel.draftBtn }}</button></sc-if>
-                      <sc-if value="{{ ib.sel.rdBusy }}"><div style="height:28px;display:flex;align-items:center;gap:6px;font-size:12px;color:#0E9F7E;font-weight:700;white-space:nowrap">{{ spinner }}작성 중</div></sc-if>
+                      <sc-if value="{{ ib.sel.rdBusy }}"><div style="height:28px;display:flex;align-items:center;gap:6px;font-size:12px;color:#0E9F7E;font-weight:700;white-space:nowrap">{{ spinner }}메일 읽고 초안 작성 중 · 10초 안팎</div></sc-if>
                     </div>
                     <sc-if value="{{ ib.sel.rdHas }}">
                       <span style="font-size:12.5px;font-weight:700;color:#3A3731">{{ ib.sel.rdSubject }}</span>
                       <textarea value="{{ ib.sel.rdBody }}" onChange="{{ ib.sel.onDraft }}" rows="8" style="width:100%;box-sizing:border-box;border:1px solid #EAE7E0;border-radius:10px;background:#fff;padding:10px 12px;font-family:inherit;font-size:13px;color:#3A3731;line-height:1.6;resize:vertical;outline:none"></textarea>
-                      <span style="font-size:11.5px;color:#8F8A80;font-weight:600">[대괄호]는 직접 채운 뒤 보내세요 · 발송은 Gmail에서</span>
+                      <span style="font-size:11.5px;color:#8F8A80;font-weight:600">[대괄호]는 직접 채운 뒤 보내세요 · 수신자·제목·본문이 채워진 Gmail 작성창이 열립니다</span>
                       <div style="display:flex;gap:8px">
                         <button onClick="{{ ib.sel.copyDraft }}" style="flex:1;height:36px;border:1px solid #EAE7E0;border-radius:10px;background:#fff;color:#3A3731;font-size:12.5px;font-weight:700;cursor:pointer;white-space:nowrap" style-hover="background:#F5F5F7">초안 복사</button>
-                        <a href="{{ ib.sel.url }}" target="_blank" onClick="{{ ib.sel.copyDraft }}" style="flex:1;height:36px;border:0;border-radius:10px;background:#1C1B19;color:#fff;font-size:12.5px;font-weight:700;display:flex;align-items:center;justify-content:center;text-decoration:none;white-space:nowrap" style-hover="background:#3A3833">복사하고 Gmail에서 답장</a>
+                        <button onClick="{{ ib.sel.openReply }}" style="flex:1.4;height:36px;border:0;border-radius:10px;background:#1C1B19;color:#fff;font-size:12.5px;font-weight:700;cursor:pointer;white-space:nowrap" style-hover="background:#3A3833" style-active="transform:scale(0.97)">{{ ib.sel.replyBtn }}</button>
                       </div>
                     </sc-if>
                     <sc-if value="{{ ib.sel.rdErr }}"><span style="font-size:12px;color:#F04452;font-weight:600">{{ ib.sel.rdErrText }}</span></sc-if>
@@ -3189,6 +3189,8 @@ class Component extends DCLogic {
   };
 
   setIb(p) { this.setState(s => ({ ib: { ...s.ib, ...(typeof p === 'function' ? p(s.ib) : p) } })); }
+  /** 화면에 보여줄 업무: 서버 모드에서는 한글이 없는(영문) 업무를 뺀다 */
+  tasks() { const a = this.state.ib.tasks || []; return isLive() ? a.filter(t => /[가-힣]/.test(String(t.title || '') + String(t.request || ''))) : a; }
   async bootIb() {
     const b = await gs('getBootstrap');
     if (b.ok) {
@@ -3317,7 +3319,7 @@ class Component extends DCLogic {
     if ((this.state.rd[t.taskId] || {}).busy) return;
     this.setRd(t.taskId, { busy: true, err: null });
     const r = await gs('draftReply', t.taskId);
-    if (r.ok) this.setRd(t.taskId, { busy: false, subject: r.data.subject, body: r.data.body });
+    if (r.ok) this.setRd(t.taskId, { busy: false, subject: r.data.subject, body: r.data.body, to: r.data.to || [], cc: r.data.cc || [] });
     else this.setRd(t.taskId, { busy: false, err: r.error.message });
   }
   async askSuggest(g) {
@@ -3528,7 +3530,7 @@ class Component extends DCLogic {
     this.setState({ brandInput: '' });
   }
   briefText() {
-    const S = this.state, T = S.ib.tasks || [], open = T.filter(t => t.status !== 'completed');
+    const S = this.state, T = this.tasks(), open = T.filter(t => t.status !== 'completed');
     const mine = open.filter(t => t.ownership === 'mine'), urg = mine.filter(t => t.priority === 'urgent'), rep = mine.filter(t => t.needsReply), unc = open.filter(t => t.ownership === 'uncertain');
     const sched = SCHED.find(x => /14:00/.test(x.t));
     const lines = [];
@@ -3541,7 +3543,7 @@ class Component extends DCLogic {
     return lines.join('\n\n');
   }
   asstActions() {
-    const S = this.state, T = S.ib.tasks || [], open = T.filter(t => t.status !== 'completed');
+    const S = this.state, T = this.tasks(), open = T.filter(t => t.status !== 'completed');
     const mine = open.filter(t => t.ownership === 'mine'), rep = mine.filter(t => t.needsReply), urg = mine.filter(t => t.priority === 'urgent'), unc = open.filter(t => t.ownership === 'uncertain');
     const say = (txt) => this.setState(s => ({ msgs: [...s.msgs, { mine: false, text: txt }] }));
     const acts = [];
@@ -3662,6 +3664,13 @@ class Component extends DCLogic {
         draftBtn: r.body ? '다시 만들기' : '답장 초안 만들기', rdSubject: r.subject || '', rdBody: r.body || '',
         makeDraft: () => this.makeDraft(t), onDraft: e => this.setRd(t.taskId, { body: e.target.value }),
         copyDraft: () => this.copyText((r.subject ? r.subject + '\n\n' : '') + (r.body || ''), '초안 복사됨 · Gmail 답장에 붙여넣기'),
+        // Gmail 전체회신 작성창을 수신자·제목·초안이 채워진 채로 연다 (발송은 사람이 누른다 · 읽기 전용 권한 유지)
+        openReply: () => {
+          const em = S.ib.email ? 'authuser=' + encodeURIComponent(S.ib.email) + '&' : '';
+          const url = 'https://mail.google.com/mail/?' + em + 'view=cm&fs=1&to=' + encodeURIComponent((r.to || []).join(',')) + '&cc=' + encodeURIComponent((r.cc || []).join(',')) + '&su=' + encodeURIComponent(r.subject || '') + '&body=' + encodeURIComponent(r.body || '');
+          window.open(url, '_blank', 'noopener');
+        },
+        replyBtn: (r.to && r.to.length) ? `Gmail 전체회신 열기 · ${1 + (r.cc || []).length}명` : 'Gmail에서 답장 열기',
         canAdPlan: isLive(), planBtn: S.adDrafts[t.threadId] ? '세팅안 보기' : '메타 세팅안 만들기',
         makePlan: () => this.openPlan({ threadId: t.threadId, subject: t.title }) };
     };
@@ -3813,7 +3822,7 @@ class Component extends DCLogic {
       buildSteps: BUILD.map(([t, sub], i) => ({ t, sub, done: i < S.buildStep, active: i === S.buildStep, wait: i > S.buildStep, c: i <= S.buildStep ? '#1C1B19' : '#B4AFA5' })) };
 
     const go = k => () => this.setState({ screen: k, aside: null, dd: null });
-    const IB = S.ib, T = IB.tasks || [];
+    const IB = S.ib, T = this.tasks();
     const open = T.filter(t => t.status !== 'completed');
     const G = { mine: open.filter(t => t.ownership === 'mine'), uncertain: open.filter(t => t.ownership === 'uncertain'), other: open.filter(t => t.ownership === 'other'), done: T.filter(t => t.status === 'completed') };
     const PR = { urgent: ['긴급', '#E42939', '#FDECEE'], important: ['중요', '#B7791F', '#FFF3D6'], normal: ['일반', '#6F6B63', '#EEF0F3'] };
