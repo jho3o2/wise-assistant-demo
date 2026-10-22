@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <base target="_top">
 <title>WISE Assistant</title>
-<!-- 생성 파일. 수정은 design/AI 비서 홈 v3.dc.html 에서 하고 node tools/build-index.mjs 로 다시 만든다. (2026-10-22 06:12 UTC) -->
+<!-- 생성 파일. 수정은 design/AI 비서 홈 v3.dc.html 에서 하고 node tools/build-index.mjs 로 다시 만든다. (2026-10-22 06:14 UTC) -->
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Manrope:wght@500;600;700;800&family=Montserrat:wght@600;700&display=swap">
 <style>
@@ -3665,10 +3665,11 @@ class Component extends DCLogic {
     };
     // 광고 세팅 요청 메일 → 승인 대기 목록의 맨 위 (서버 모드: 실제 Gmail, 데모: 샘플)
     const fromName = f => String(f || '').replace(/<.*$/, '').replace(/"/g, '').trim() || f;
+    const plain = x => String(x || '').replace(/<[^>]+>/g, '').replace(/&amp;/g, '&').replace(/&lt;/g, '<').replace(/&gt;/g, '>').replace(/&quot;/g, '"').replace(/&#39;/g, "'").replace(/\s+/g, ' ').trim();
     const adReqRows = S.adReqs.map(q => {
       const d = S.adDrafts[q.threadId], ex = d && d.executed;
       const busy = S.adBusy === 'build' && S.adDraft && S.adDraft.threadId === q.threadId;
-      return { t: q.subject, s: q.snippet, tag: fromName(q.from), kindLabel: '세팅 요청', tc: '#1C1B19', pending: !busy && !(ex && ex.campaignId), busy, done: !!(ex && ex.campaignId),
+      return { t: plain(q.subject), s: plain(q.snippet), tag: fromName(q.from), kindLabel: '세팅 요청', tc: '#1C1B19', pending: !busy && !(ex && ex.campaignId), busy, done: !!(ex && ex.campaignId),
         btn2: d ? '세팅안 보기' : '세팅안', approve: e => { e && e.stopPropagation && e.stopPropagation(); this.openPlan(q); } };
     });
     const mailView = i => ({ from: i.from, time: i.time, s: i.s, tag: bname(i.brand), done: S.st[i.id] === 'done', draft: S.st[i.id] === 'done' ? `${chOf(i)} · ${dr(i)}` : '↳ ' + dr(i) });
@@ -3721,10 +3722,11 @@ class Component extends DCLogic {
     const ask = S.adAsk, askT = ask && ask.task, askR = ask && ask.req;
     const askText = !ask ? '' : askT
       ? [`요청 · ${askT.request || askT.title}`, `요청자 ${askT.requester || '—'} · 마감 ${askT.dueText || (askT.dueDate ? askT.dueDate.slice(5).replace('-', '.') : '미정')}`, askT.nextAction ? `다음 할 일 · ${askT.nextAction}` : ''].filter(Boolean).join('\n')
-      : [`메일 · ${askR.subject}`, askR.from ? `보낸 사람 ${String(askR.from).replace(/<.*$/, '').trim()}` : '', askR.snippet ? `"${askR.snippet}"` : ''].filter(Boolean).join('\n');
+      : [`메일 · ${plain(askR.subject)}`, askR.from ? `보낸 사람 ${String(askR.from).replace(/<.*$/, '').trim()}` : '', askR.snippet ? `"${plain(askR.snippet)}"` : ''].filter(Boolean).join('\n');
     const won0 = n => '₩' + Number(n || 0).toLocaleString();
     const summary = !PL ? '' : [
-      `메일 요청 · ${(S.adTask && (S.adTask.request || S.adTask.title)) || D.subject || ''}`,
+      `메일 요청 · ${(S.adTask && (S.adTask.request || S.adTask.title)) || plain(D.subject) || ''}`,
+      D.sources && D.sources.length ? `읽은 자료 · ${D.sources.map(x => x.name).join(' · ')}` : '읽은 자료 · 메일 본문만 (Drive 링크·첨부 없음)',
       '',
       '이렇게 세팅할게요',
       `· 계정 ${PL.adAccountName || PL.adAccountId}`,
