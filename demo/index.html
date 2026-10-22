@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <base target="_top">
 <title>WISE Assistant</title>
-<!-- 생성 파일. 수정은 design/AI 비서 홈 v3.dc.html 에서 하고 node tools/build-index.mjs 로 다시 만든다. (2026-10-22 06:14 UTC) -->
+<!-- 생성 파일. 수정은 design/AI 비서 홈 v3.dc.html 에서 하고 node tools/build-index.mjs 로 다시 만든다. (2026-10-22 06:16 UTC) -->
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Manrope:wght@500;600;700;800&family=Montserrat:wght@600;700&display=swap">
 <style>
@@ -2748,7 +2748,7 @@ window.__resources = window.__resources || {};
       </sc-if>
       <sc-if value="{{ aside.isPlan }}">
         <div style="display:flex;flex-direction:column;gap:14px;animation:fadeUp .25s ease">
-          <span style="font-size:12.5px;color:#6F6B63;font-weight:600;line-height:1.45">{{ aside.pl.subject }}</span>
+          <div style="display:flex;align-items:center;justify-content:space-between;gap:10px"><span style="font-size:12.5px;color:#6F6B63;font-weight:600;line-height:1.45">{{ aside.pl.subject }}</span><sc-if value="{{ aside.pl.canRebuild }}"><button onClick="{{ aside.pl.rebuild }}" title="메일·자료를 다시 읽어 새 세팅안 작성" style="height:28px;padding:0 10px;flex:none;border:1px solid #EAE7E0;border-radius:8px;background:#fff;color:#3A3731;font-size:12px;font-weight:700;cursor:pointer;white-space:nowrap" style-hover="background:#F5F5F7">새 세팅안 만들기</button></sc-if></div>
           <sc-if value="{{ aside.pl.asking }}">
             <div style="display:flex;flex-direction:column;gap:12px;animation:fadeUp .25s ease">
               <div style="display:flex;gap:10px;align-items:flex-start"><div style="width:32px;height:32px;flex:none;border-radius:50%;background:linear-gradient(160deg,#7DBBFF 0%,#3182F6 60%,#2468E0 100%);display:flex;align-items:center;justify-content:center;gap:5px"><span style="width:4px;height:8px;border-radius:2px;background:#fff"></span><span style="width:4px;height:8px;border-radius:2px;background:#fff"></span></div><div style="flex:1;padding:12px 15px;border-radius:14px;background:#EEF0F3;font-size:13.5px;line-height:1.65;white-space:pre-line;word-break:keep-all">{{ aside.pl.askText }}</div></div>
@@ -3110,9 +3110,9 @@ const DEMO_PLAN = tid => {
       campaign: { name: `${B}_2611_${prod}_TRAFFIC`, objective: 'OUTCOME_TRAFFIC', startDate: '2026-11-01', endDate: '2026-11-30' },
       adsets: [
         { name: s1, dailyBudget: 40000, ageMin: 25, ageMax: 34, startDate: '2026-11-01', endDate: '2026-11-30', targetingNote: '미디어플랜 1행', interests: [{ id: '6003', name: moa ? '스킨케어' : '간편식', confirmed: true }], regions: [{ key: '2004', name: 'Seoul', confirmed: true }],
-          interestCandidates: [{ id: '6003', name: moa ? '스킨케어' : '간편식' }, { id: '6004', name: moa ? '뷰티' : '요리' }, { id: '6005', name: moa ? '화장품' : '배달 음식' }], regionCandidates: [{ key: '2004', name: 'Seoul' }, { key: '2005', name: 'Gyeonggi-do' }] },
+          interestCandidates: [{ query: moa ? '스킨케어' : '간편식', options: [{ id: '6003', name: moa ? '스킨케어' : '간편식' }, { id: '6004', name: moa ? '뷰티' : '요리' }, { id: '6005', name: moa ? '화장품' : '배달 음식' }] }], regionCandidates: [{ query: '서울', options: [{ key: '2004', name: 'Seoul' }, { key: '2005', name: 'Gyeonggi-do' }] }] },
         { name: s2, dailyBudget: 30000, ageMin: 35, ageMax: 44, startDate: '2026-11-01', endDate: '2026-11-30', targetingNote: '미디어플랜 2행', interests: [], regions: [],
-          interestCandidates: [{ id: '6003', name: moa ? '스킨케어' : '간편식' }], regionCandidates: [] }
+          interestCandidates: [{ query: moa ? '스킨케어' : '간편식', options: [{ id: '6003', name: moa ? '스킨케어' : '간편식' }] }], regionCandidates: [] }
       ],
       ads: [
         { adsetName: s1, name: `${B}_2611_${prod}_A`, creativeType: 'image', imageFileName: '소재_A.jpg', imageFileId: 'img1', primaryText: moa ? '바르는 순간 48시간 수분' : '전자레인지 3분, 오늘 저녁 완성', headline: moa ? '수분크림 리뷰 이벤트' : '간편식 신제품 출시', utmUrl: `${site}?utm_source=meta&utm_medium=paid&utm_campaign=2611_${moa ? 'cream' : 'new'}`, urlOk: true, copySource: '메일' },
@@ -3724,6 +3724,9 @@ class Component extends DCLogic {
       ? [`요청 · ${askT.request || askT.title}`, `요청자 ${askT.requester || '—'} · 마감 ${askT.dueText || (askT.dueDate ? askT.dueDate.slice(5).replace('-', '.') : '미정')}`, askT.nextAction ? `다음 할 일 · ${askT.nextAction}` : ''].filter(Boolean).join('\n')
       : [`메일 · ${plain(askR.subject)}`, askR.from ? `보낸 사람 ${String(askR.from).replace(/<.*$/, '').trim()}` : '', askR.snippet ? `"${plain(askR.snippet)}"` : ''].filter(Boolean).join('\n');
     const won0 = n => '₩' + Number(n || 0).toLocaleString();
+    // 서버 후보: [{ query, options: [{ id|key, name }] }] (예전 평평한 배열도 허용) → 중복 제거해 칩 목록으로
+    const flatC = list => { const seen = new Set(), out = []; (list || []).forEach(c => { const opts = Array.isArray(c.options) ? c.options : [c]; opts.forEach(o => { const k = String(o.id != null ? o.id : o.key); if (!o || !o.name || seen.has(k)) return; seen.add(k); out.push(o); }); }); return out; };
+    const rebuild = () => D && this.buildPlan({ threadId: D.threadId, subject: D.subject });
     const summary = !PL ? '' : [
       `메일 요청 · ${(S.adTask && (S.adTask.request || S.adTask.title)) || plain(D.subject) || ''}`,
       D.sources && D.sources.length ? `읽은 자료 · ${D.sources.map(x => x.name).join(' · ')}` : '읽은 자료 · 메일 본문만 (Drive 링크·첨부 없음)',
@@ -3737,6 +3740,7 @@ class Component extends DCLogic {
     ].join('\n');
     const plView = {
       asking: !!ask && !PL && S.adBusy !== 'build', askText, summary, hasSummary: !!PL && !(EX && EX.campaignId),
+      canRebuild: !!D && S.adBusy !== 'build' && S.adBusy !== 'exec', rebuild,
       execNow: () => this.execNow(), cancel: () => this.setState({ aside: null }),
       askYes: () => this.buildPlan(ask.req), askNo: () => this.setState({ adAsk: null, adDraft: null, aside: null }),
       building: S.adBusy === 'build', phase: S.adPhase, subject: D ? D.subject || '' : '',
@@ -3747,9 +3751,9 @@ class Component extends DCLogic {
       adsets: PL ? PL.adsets.map((s, i) => ({ name: s.name, budget: String(s.dailyBudget), meta: `${s.ageMin}–${s.ageMax}세 · ${s.startDate} ~ ${s.endDate}`, note: s.targetingNote || '', hasNote: !!s.targetingNote,
         setName: e => { const v = e.target.value; this.setPlan(p => { const old = p.adsets[i].name; p.adsets[i].name = v; p.ads.forEach(a => { if (a.adsetName === old) a.adsetName = v; }); }); },
         setBudget: e => { const v = Number(String(e.target.value).replace(/[^\d]/g, '')) || 0; this.setPlan(p => { p.adsets[i].dailyBudget = v; }); },
-        hasInt: (s.interestCandidates || []).length > 0, hasReg: (s.regionCandidates || []).length > 0,
-        interests: (s.interestCandidates || []).map(c => { const on = (s.interests || []).some(x => x.id === c.id); return { name: c.name, ...chip(on), toggle: () => this.setPlan(p => { const a = p.adsets[i]; a.interests = on ? (a.interests || []).filter(x => x.id !== c.id) : [...(a.interests || []), { id: c.id, name: c.name, confirmed: true }]; }) }; }),
-        regions: (s.regionCandidates || []).map(c => { const on = (s.regions || []).some(x => x.key === c.key); return { name: c.name, ...chip(on), toggle: () => this.setPlan(p => { const a = p.adsets[i]; a.regions = on ? (a.regions || []).filter(x => x.key !== c.key) : [...(a.regions || []), { key: c.key, name: c.name, confirmed: true }]; }) }; }) })) : [],
+        hasInt: flatC(s.interestCandidates).length > 0, hasReg: flatC(s.regionCandidates).length > 0,
+        interests: flatC(s.interestCandidates).map(c => { const on = (s.interests || []).some(x => String(x.id) === String(c.id)); return { name: c.name, ...chip(on), toggle: () => this.setPlan(p => { const a = p.adsets[i]; a.interests = on ? (a.interests || []).filter(x => String(x.id) !== String(c.id)) : [...(a.interests || []), { id: String(c.id), name: c.name, confirmed: true }]; }) }; }),
+        regions: flatC(s.regionCandidates).map(c => { const on = (s.regions || []).some(x => String(x.key) === String(c.key)); return { name: c.name, ...chip(on), toggle: () => this.setPlan(p => { const a = p.adsets[i]; a.regions = on ? (a.regions || []).filter(x => String(x.key) !== String(c.key)) : [...(a.regions || []), { key: String(c.key), name: c.name, confirmed: true }]; }) }; }) })) : [],
       ads: PL ? PL.ads.map((a, i) => ({ name: a.name, adsetName: a.adsetName, img: a.existingPostId ? `기존 게시물 ${a.existingPostId}` : (a.imageFileName || '소재 없음'), imgC: (a.imageFileId || a.existingPostId) ? '#0E9F7E' : RED,
         text: a.primaryText || '', setText: e => { const v = e.target.value; this.setPlan(p => { p.ads[i].primaryText = v; }); },
         headline: a.headline || '', setHeadline: e => { const v = e.target.value; this.setPlan(p => { p.ads[i].headline = v; }); },
